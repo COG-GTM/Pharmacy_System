@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UserRegistered",
+  "description": "Published by Auth Service when a new user registers",
+  "type": "object",
+  "required": ["event", "data"],
+  "properties": {
+    "event": { "const": "user.registered" },
+    "data": {
+      "type": "object",
+      "required": ["user_id", "email", "name", "role", "registered_at"],
+      "properties": {
+        "user_id": { "type": "integer" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "pharmacy", "doctor", "client"] },
+        "registered_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PaymentCompleted",
+  "description": "Published by Payment Service when a payment is completed",
+  "type": "object",
+  "required": ["event", "data"],
+  "properties": {
+    "event": { "const": "payment.completed" },
+    "data": {
+      "type": "object",
+      "required": ["payment_id", "order_id", "method", "amount", "completed_at"],
+      "properties": {
+        "payment_id": { "type": "integer" },
+        "order_id": { "type": "integer" },
+        "method": { "type": "string" },
+        "amount": { "type": "number" },
+        "completed_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

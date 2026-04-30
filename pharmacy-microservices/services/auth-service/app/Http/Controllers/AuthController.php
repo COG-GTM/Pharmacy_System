@@ -17,7 +17,6 @@ class AuthController extends Controller
             'name' => 'required|min:3',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6|confirmed',
-            'role' => 'sometimes|in:admin,pharmacy,doctor,client',
         ]);
 
         $user = User::create([
@@ -26,7 +25,8 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $role = $request->input('role', 'client');
+        // Public registration always assigns client role; other roles are created via the internal POST /users endpoint
+        $role = 'client';
         $user->assignRole($role);
 
         event(new UserRegistered($user, $role));

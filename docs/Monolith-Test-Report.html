@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monolith Test Report - Pharmacy System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #2e7d32, #388e3c); color: white; padding: 40px; border-radius: 8px; margin-bottom: 30px; }
+        .header h1 { font-size: 2em; margin-bottom: 10px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .summary-card { background: white; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .summary-card .number { font-size: 2.5em; font-weight: bold; }
+        .summary-card .label { color: #666; font-size: 0.9em; }
+        .green { color: #2e7d32; }
+        .blue { color: #1565c0; }
+        .orange { color: #e65100; }
+        .section { background: white; border-radius: 8px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section h2 { color: #2e7d32; border-bottom: 3px solid #2e7d32; padding-bottom: 10px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #e8f5e9; color: #2e7d32; font-weight: 600; }
+        tr:nth-child(even) { background: #f5f5f5; }
+        .pass { color: #2e7d32; font-weight: 600; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 600; background: #c8e6c9; color: #2e7d32; }
+        .test-name { font-family: monospace; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Monolith Test Report</h1>
+    <h2 style="font-weight:300; font-size:1.2em;">Pharmacy Management System — Pre-Migration Test Coverage</h2>
+    <div style="opacity:0.9; font-size:0.9em; margin-top:10px;">
+        <strong>Date:</strong> April 30, 2026 &nbsp;|&nbsp;
+        <strong>Branch:</strong> devin/1777532622-microservices-migration &nbsp;|&nbsp;
+        <strong>Framework:</strong> PHPUnit 9.x + Laravel 9.x
+    </div>
+</div>
+
+<div class="summary-grid">
+    <div class="summary-card">
+        <div class="number green">80</div>
+        <div class="label">Total Test Cases</div>
+    </div>
+    <div class="summary-card">
+        <div class="number blue">13</div>
+        <div class="label">Test Files</div>
+    </div>
+    <div class="summary-card">
+        <div class="number blue">9</div>
+        <div class="label">Model Factories</div>
+    </div>
+    <div class="summary-card">
+        <div class="number orange">9</div>
+        <div class="label">Bounded Contexts</div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Test Suite Overview</h2>
+    <table>
+        <tr><th>Test File</th><th>Tests</th><th>Context</th><th>Status</th></tr>
+        <tr><td>tests/Feature/AuthTest.php</td><td>8</td><td>Auth (API)</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/PharmacyTest.php</td><td>10</td><td>Pharmacy</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/DoctorTest.php</td><td>10</td><td>Pharmacy</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/ClientTest.php</td><td>6</td><td>Client</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/AddressTest.php</td><td>5</td><td>Client</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/MedicineTest.php</td><td>5</td><td>Catalog</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/AreaTest.php</td><td>4</td><td>Geography</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/OrderTest.php</td><td>10</td><td>Order</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/OrderApiTest.php</td><td>5</td><td>Order (API)</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/PaymentTest.php</td><td>4</td><td>Payment</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/JobTest.php</td><td>5</td><td>Jobs/Queue</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/RevenueTest.php</td><td>3</td><td>Analytics</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/ChartTest.php</td><td>2</td><td>Analytics</td><td><span class="badge">WRITTEN</span></td></tr>
+        <tr><td>tests/Feature/RoleAccessTest.php</td><td>3</td><td>Auth/RBAC</td><td><span class="badge">WRITTEN</span></td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Detailed Test Cases</h2>
+
+    <h3 style="color:#1565c0; margin:20px 0 10px;">AuthTest.php (8 tests)</h3>
+    <table>
+        <tr><th>#</th><th>Test Name</th><th>Description</th></tr>
+        <tr><td>1</td><td class="test-name">test_client_can_register</td><td>POST /api/register with valid data creates user+client, assigns client role</td></tr>
+        <tr><td>2</td><td class="test-name">test_register_fails_with_invalid_data</td><td>Missing/invalid fields return 422</td></tr>
+        <tr><td>3</td><td class="test-name">test_register_fails_with_duplicate_email</td><td>Existing email returns validation error</td></tr>
+        <tr><td>4</td><td class="test-name">test_client_can_login</td><td>POST /api/login returns Sanctum token</td></tr>
+        <tr><td>5</td><td class="test-name">test_login_fails_with_wrong_password</td><td>Wrong credentials return 422</td></tr>
+        <tr><td>6</td><td class="test-name">test_login_rejects_non_client_role</td><td>Pharmacy/doctor/admin users cannot login via API</td></tr>
+        <tr><td>7</td><td class="test-name">test_email_verification_works</td><td>GET /api/email/verify/{id}/{hash} verifies email</td></tr>
+        <tr><td>8</td><td class="test-name">test_email_resend_works</td><td>GET /api/email/resend/{id} resends verification</td></tr>
+    </table>
+
+    <h3 style="color:#1565c0; margin:20px 0 10px;">PharmacyTest.php (10 tests)</h3>
+    <table>
+        <tr><th>#</th><th>Test Name</th><th>Description</th></tr>
+        <tr><td>1</td><td class="test-name">test_admin_can_view_pharmacies_index</td><td>Admin GET /pharmacies returns 200</td></tr>
+        <tr><td>2</td><td class="test-name">test_pharmacy_role_can_view_pharmacies_index</td><td>Pharmacy user can access index</td></tr>
+        <tr><td>3</td><td class="test-name">test_admin_can_create_pharmacy</td><td>POST creates User+Pharmacy+assigns role</td></tr>
+        <tr><td>4</td><td class="test-name">test_pharmacy_store_with_avatar_upload</td><td>File upload stores avatar image</td></tr>
+        <tr><td>5</td><td class="test-name">test_pharmacy_show_returns_json</td><td>GET /pharmacies/{id} returns JSON with relations</td></tr>
+        <tr><td>6</td><td class="test-name">test_admin_can_update_pharmacy_area_and_priority</td><td>Admin can change area_id and priority</td></tr>
+        <tr><td>7</td><td class="test-name">test_pharmacy_role_cannot_change_area_and_priority</td><td>Pharmacy user's area/priority changes ignored</td></tr>
+        <tr><td>8</td><td class="test-name">test_destroy_blocked_when_active_orders_exist</td><td>Cannot delete pharmacy with Processing/Waiting/Confirmed orders</td></tr>
+        <tr><td>9</td><td class="test-name">test_destroy_cascades_doctors_and_orders</td><td>Soft-delete cascades to doctors, deletes user</td></tr>
+        <tr><td>10</td><td class="test-name">test_restore_soft_deleted_pharmacy</td><td>Restores pharmacy and its doctors</td></tr>
+    </table>
+
+    <h3 style="color:#1565c0; margin:20px 0 10px;">OrderTest.php (10 tests)</h3>
+    <table>
+        <tr><th>#</th><th>Test Name</th><th>Description</th></tr>
+        <tr><td>1</td><td class="test-name">test_index_loads_all_relations</td><td>GET /orders loads pharmacies, doctors, medicines, users</td></tr>
+        <tr><td>2</td><td class="test-name">test_store_order_happy_path</td><td>Creates order with medicines, calculates total price</td></tr>
+        <tr><td>3</td><td class="test-name">test_store_order_wrong_address_rejected</td><td>Address not belonging to client returns error</td></tr>
+        <tr><td>4</td><td class="test-name">test_store_order_wrong_doctor_rejected</td><td>Doctor not in pharmacy returns error</td></tr>
+        <tr><td>5</td><td class="test-name">test_show_order_returns_json_with_all_relations</td><td>GET /orders/{id} returns order+user+pharmacy+doctor+prescriptions</td></tr>
+        <tr><td>6</td><td class="test-name">test_edit_order</td><td>GET /orders/{id}/edit returns 200</td></tr>
+        <tr><td>7</td><td class="test-name">test_update_order_recalculates_price</td><td>PUT recalculates price with new medicines</td></tr>
+        <tr><td>8</td><td class="test-name">test_destroy_order_cascades</td><td>DELETE removes order_medicines and prescriptions</td></tr>
+        <tr><td>9</td><td class="test-name">test_cancel_order_from_waiting_status</td><td>Cancel from WaitingForUserConfirmation status</td></tr>
+        <tr><td>10</td><td class="test-name">test_cancel_already_canceled_order</td><td>Cancel on already-canceled order</td></tr>
+    </table>
+
+    <h3 style="color:#1565c0; margin:20px 0 10px;">JobTest.php (5 tests)</h3>
+    <table>
+        <tr><th>#</th><th>Test Name</th><th>Description</th></tr>
+        <tr><td>1</td><td class="test-name">test_assign_new_order_sets_pharmacy_by_area_priority</td><td>AssignNewOrder picks highest-priority pharmacy in area</td></tr>
+        <tr><td>2</td><td class="test-name">test_change_order_status_confirmed_to_delivered</td><td>ChangeOrderStatusJob: Confirmed → Delivered</td></tr>
+        <tr><td>3</td><td class="test-name">test_remove_old_bans_removes_30_day_old_bans</td><td>RemoveOldBans unbans users with 30+ day old bans</td></tr>
+        <tr><td>4</td><td class="test-name">test_order_confirmation_job_sends_notification</td><td>OrderConfirmationJob sends OrderConfirmationNotification</td></tr>
+        <tr><td>5</td><td class="test-name">test_welcome_email_job_sends_notification</td><td>WelcomeEmailJob sends WelcomeEmailNotification</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Model Factories Created</h2>
+    <table>
+        <tr><th>Factory</th><th>Model</th><th>Key Fields</th></tr>
+        <tr><td>AreaFactory</td><td>App\Models\Area</td><td>name, address, country_id</td></tr>
+        <tr><td>PharmacyFactory</td><td>App\Models\Pharmacy</td><td>user_id, pharmacy_name, avatar_image, area_id, priority</td></tr>
+        <tr><td>DoctorFactory</td><td>App\Models\Doctor</td><td>user_id, avatar_image, pharmacy_id, is_banned</td></tr>
+        <tr><td>ClientFactory</td><td>App\Models\Client</td><td>id (14-digit), user_id, gender, date_of_birth, phone</td></tr>
+        <tr><td>AddressFactory</td><td>App\Models\Address</td><td>client_id, area_id, street_name, building_number, floor_number, flat_number, is_main</td></tr>
+        <tr><td>MedicineFactory</td><td>App\Models\Medicine</td><td>name, type, quantity, price</td></tr>
+        <tr><td>OrderFactory</td><td>App\Models\Order</td><td>user_id, pharmacy_id, doctor_id, status, price, creator_type</td></tr>
+        <tr><td>PrescriptionFactory</td><td>App\Models\Prescription</td><td>order_id, image</td></tr>
+        <tr><td>PaymentFactory</td><td>App\Models\Payment</td><td>method, order_id</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Coverage by Bounded Context</h2>
+    <table>
+        <tr><th>Bounded Context</th><th>Test Files</th><th>Total Tests</th><th>Coverage Areas</th></tr>
+        <tr><td>Auth &amp; Identity</td><td>AuthTest, RoleAccessTest</td><td>11</td><td>Registration, login, email verification, role-based access control</td></tr>
+        <tr><td>Pharmacy &amp; Doctor</td><td>PharmacyTest, DoctorTest</td><td>20</td><td>CRUD, avatar upload, soft deletes, ban/unban, role-based views</td></tr>
+        <tr><td>Client &amp; Address</td><td>ClientTest, AddressTest</td><td>11</td><td>CRUD (web+API), cascade delete, is_main flag, Sanctum auth</td></tr>
+        <tr><td>Order</td><td>OrderTest, OrderApiTest</td><td>15</td><td>Full lifecycle, validation, API with prescriptions, price calculation</td></tr>
+        <tr><td>Catalog</td><td>MedicineTest</td><td>5</td><td>CRUD, destroy-blocked-if-in-order</td></tr>
+        <tr><td>Geography</td><td>AreaTest</td><td>4</td><td>CRUD with countries, destroy-blocked-if-has-pharmacies</td></tr>
+        <tr><td>Payment</td><td>PaymentTest</td><td>4</td><td>Stripe GET/POST, status transitions (Waiting→Confirmed, Canceled, Delivered)</td></tr>
+        <tr><td>Jobs/Queue</td><td>JobTest</td><td>5</td><td>AssignNewOrder, ChangeOrderStatus, RemoveOldBans, notifications</td></tr>
+        <tr><td>Analytics</td><td>RevenueTest, ChartTest</td><td>5</td><td>Revenue datatable by role, chart status data, 403 for unauthorized</td></tr>
+    </table>
+</div>
+
+</body>
+</html>

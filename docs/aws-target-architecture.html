@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy System — AWS Target Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --aws-orange: #FF9900;
+            --aws-dark: #232F3E;
+            --aws-light: #F2F3F3;
+            --text-primary: #16191F;
+            --text-secondary: #545B64;
+            --border: #D5DBDB;
+            --success: #1D8102;
+            --info: #0073BB;
+            --warning: #D13212;
+            --phase1: #0073BB;
+            --phase2: #FF9900;
+            --phase3: #1D8102;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: var(--text-primary);
+            background: var(--aws-light);
+            line-height: 1.6;
+        }
+        .hero {
+            background: linear-gradient(135deg, var(--aws-dark) 0%, #37475A 100%);
+            color: #fff;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        .hero h1 { font-size: 2.4rem; font-weight: 700; margin-bottom: 12px; }
+        .hero .subtitle { font-size: 1.15rem; color: #D5DBDB; max-width: 720px; margin: 0 auto; }
+        .hero .badge {
+            display: inline-block;
+            background: var(--aws-orange);
+            color: var(--aws-dark);
+            padding: 4px 16px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .toc {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 28px 32px;
+            margin: 32px auto;
+            max-width: 700px;
+        }
+        .toc h2 { font-size: 1.2rem; margin-bottom: 12px; color: var(--aws-dark); }
+        .toc ol { padding-left: 20px; }
+        .toc li { margin-bottom: 6px; }
+        .toc a { color: var(--info); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        section { margin: 40px 0; }
+        .card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        h2 {
+            font-size: 1.6rem;
+            color: var(--aws-dark);
+            border-left: 4px solid var(--aws-orange);
+            padding-left: 16px;
+            margin-bottom: 20px;
+        }
+        h3 { font-size: 1.2rem; color: var(--aws-dark); margin: 20px 0 10px; }
+        h4 { font-size: 1.05rem; color: var(--text-secondary); margin: 16px 0 8px; }
+        p, li { color: var(--text-secondary); }
+        ul, ol { padding-left: 24px; margin-bottom: 12px; }
+        li { margin-bottom: 6px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.92rem;
+        }
+        th {
+            background: var(--aws-dark);
+            color: #fff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        tr:nth-child(even) { background: #F7F8F8; }
+        .mermaid {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 20px 0;
+            text-align: center;
+            overflow-x: auto;
+        }
+        .phase-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #fff;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .phase-1 { background: var(--phase1); }
+        .phase-2 { background: var(--phase2); color: var(--aws-dark); }
+        .phase-3 { background: var(--phase3); }
+        .callout {
+            border-left: 4px solid var(--info);
+            background: #F1FAFF;
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+        .callout.warn {
+            border-left-color: var(--warning);
+            background: #FEF6F4;
+        }
+        .callout.success {
+            border-left-color: var(--success);
+            background: #F1F8E9;
+        }
+        .callout strong { color: var(--text-primary); }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.7rem; }
+            .card { padding: 20px; }
+        }
+        .service-icon {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: var(--aws-orange);
+            color: #fff;
+            border-radius: 6px;
+            text-align: center;
+            line-height: 28px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        code {
+            background: #F2F3F3;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.88rem;
+            color: var(--aws-dark);
+        }
+        footer {
+            background: var(--aws-dark);
+            color: #D5DBDB;
+            text-align: center;
+            padding: 24px;
+            margin-top: 40px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== HERO ==================== -->
+<div class="hero">
+    <span class="badge">AWS MIGRATION ARCHITECTURE</span>
+    <h1>Pharmacy Management System</h1>
+    <p class="subtitle">
+        Target architecture design and migration strategy for moving the Laravel monolith
+        to AWS cloud-native services. Covers compute, data, messaging, observability, and a
+        phased migration roadmap.
+    </p>
+</div>
+
+<!-- ==================== TOC ==================== -->
+<div class="container">
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ol>
+            <li><a href="#current-state">Current-State Architecture Analysis</a></li>
+            <li><a href="#target-overview">AWS Target Architecture Overview</a></li>
+            <li><a href="#network">Network &amp; Security Architecture</a></li>
+            <li><a href="#compute">Compute Layer — ECS Fargate</a></li>
+            <li><a href="#data">Data Layer — Aurora MySQL &amp; ElastiCache</a></li>
+            <li><a href="#storage">Object Storage &amp; CDN</a></li>
+            <li><a href="#async">Asynchronous Processing &amp; Messaging</a></li>
+            <li><a href="#notifications">Notification Services</a></li>
+            <li><a href="#cicd">CI/CD Pipeline</a></li>
+            <li><a href="#observability">Observability &amp; Monitoring</a></li>
+            <li><a href="#security">Security &amp; Compliance</a></li>
+            <li><a href="#service-mapping">Service Mapping — Monolith to AWS</a></li>
+            <li><a href="#migration-phases">Migration Roadmap — Phased Approach</a></li>
+            <li><a href="#cost">Cost Estimation &amp; Optimization</a></li>
+            <li><a href="#risks">Risks &amp; Mitigations</a></li>
+        </ol>
+    </div>
+
+    <!-- ==================== 1. CURRENT STATE ==================== -->
+    <section id="current-state">
+        <h2>1. Current-State Architecture Analysis</h2>
+        <div class="card">
+            <h3>Application Overview</h3>
+            <p>The Pharmacy Management System is a <strong>Laravel 9 monolith</strong> (PHP 8.0+) that coordinates medical prescriptions, orders, and delivery logistics across four user roles: <strong>Admin</strong>, <strong>Pharmacy</strong>, <strong>Doctor</strong>, and <strong>Client</strong>.</p>
+
+            <div class="mermaid">
+graph TB
+    subgraph "Current Monolith Architecture"
+        direction TB
+        Browser["Browser<br/>(Bootstrap + jQuery + Chart.js)"]
+        MobileAPI["Mobile / External Client<br/>(REST API)"]
+
+        subgraph "Single Laravel Server"
+            direction TB
+            WebRoutes["Web Routes<br/>(Session Auth + Blade Views)"]
+            APIRoutes["API Routes<br/>(Sanctum Token Auth)"]
+            Controllers["Controllers<br/>(12 Controllers)"]
+            Middleware["Middleware<br/>(RBAC via Spatie Permissions)"]
+            Models["Eloquent Models<br/>(12 Models)"]
+            Jobs["Background Jobs<br/>(5 Queued Jobs)"]
+            Scheduler["Task Scheduler<br/>(4 Scheduled Tasks)"]
+            Mail["Mail / Notifications<br/>(3 Notification Classes)"]
+            Stripe["Stripe Payment<br/>Integration"]
+        end
+
+        MySQL[("MySQL Database<br/>(Single Instance)")]
+        FileStorage["Local File Storage<br/>(Avatars, Prescriptions)"]
+        SMTP["SMTP / Mailtrap<br/>(Email)"]
+        PusherExt["Pusher<br/>(Real-Time Events)"]
+        StripeAPI["Stripe API<br/>(Payments)"]
+
+        Browser --> WebRoutes
+        MobileAPI --> APIRoutes
+        WebRoutes --> Middleware --> Controllers
+        APIRoutes --> Middleware
+        Controllers --> Models
+        Controllers --> Jobs
+        Controllers --> Stripe
+        Scheduler --> Jobs
+        Jobs --> Mail
+        Models --> MySQL
+        Mail --> SMTP
+        Controllers --> PusherExt
+        Controllers --> FileStorage
+        Stripe --> StripeAPI
+    end
+
+    style MySQL fill:#3F8624,color:#fff
+    style Browser fill:#0073BB,color:#fff
+    style MobileAPI fill:#0073BB,color:#fff
+    style StripeAPI fill:#635BFF,color:#fff
+    style PusherExt fill:#300D4F,color:#fff
+            </div>
+
+            <h3>Key Components Inventory</h3>
+            <table>
+                <thead>
+                    <tr><th>Component</th><th>Technology</th><th>Details</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Framework</td><td>Laravel 9</td><td>PHP 8.0+, Blade templates, Eloquent ORM</td></tr>
+                    <tr><td>Database</td><td>MySQL</td><td>33 migrations, enum columns, relational schema</td></tr>
+                    <tr><td>Auth (Web)</td><td>Laravel UI + Sessions</td><td>Session-based with email verification</td></tr>
+                    <tr><td>Auth (API)</td><td>Laravel Sanctum</td><td>Token-based for Client mobile API</td></tr>
+                    <tr><td>RBAC</td><td>Spatie Permissions</td><td>4 roles: admin, pharmacy, doctor, client</td></tr>
+                    <tr><td>Queue</td><td>Sync driver (default)</td><td>SQS pre-configured in queue.php</td></tr>
+                    <tr><td>Payments</td><td>Stripe PHP SDK</td><td>Order confirmation payments</td></tr>
+                    <tr><td>Frontend</td><td>Vite + Bootstrap 5</td><td>jQuery, Chart.js, Select2, DataTables</td></tr>
+                    <tr><td>Real-time</td><td>Pusher</td><td>WebSocket broadcasting</td></tr>
+                    <tr><td>Email</td><td>SMTP (Mailtrap)</td><td>Welcome emails, order confirmations, inactive user alerts</td></tr>
+                    <tr><td>File Storage</td><td>Local disk</td><td>Prescription images, user avatars</td></tr>
+                    <tr><td>Scheduler</td><td>Laravel Scheduler</td><td>Order assignment, status changes, ban cleanup</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Domain Model</h3>
+            <div class="mermaid">
+erDiagram
+    User ||--o| Client : "has profile"
+    User ||--o| Pharmacy : "owns"
+    User ||--o| Doctor : "is"
+    User }|--|| Role : "has"
+    Client ||--o{ Address : "has many"
+    Address }o--|| Area : "in"
+    Area ||--o{ Pharmacy : "contains"
+    Pharmacy ||--o{ Doctor : "employs"
+    Pharmacy ||--o{ Order : "fulfills"
+    Client ||--o{ Order : "places"
+    Doctor ||--o{ Order : "prescribes"
+    Order ||--o{ OrderMedicine : "contains"
+    OrderMedicine }o--|| Medicine : "references"
+    Order ||--o{ Prescription : "has"
+    Order ||--o| Payment : "paid via"
+    Address ||--o{ Order : "delivered to"
+
+    User {
+        int id PK
+        string name
+        string email
+        string password
+        datetime email_verified_at
+    }
+    Client {
+        int id PK
+        int user_id FK
+        string gender
+        date date_of_birth
+        string phone
+        string avatar_image
+    }
+    Pharmacy {
+        int id PK
+        int user_id FK
+        string pharmacy_name
+        int area_id FK
+        int priority
+        string avatar_image
+    }
+    Doctor {
+        int id PK
+        int user_id FK
+        int pharmacy_id FK
+        string avatar_image
+        boolean is_banned
+    }
+    Order {
+        int id PK
+        int user_id FK
+        int doctor_id FK
+        int pharmacy_id FK
+        int delivering_address_id FK
+        string status
+        boolean is_insured
+        decimal price
+        string creator_type
+    }
+    Medicine {
+        int id PK
+        string name
+        string type
+        int quantity
+        int price
+    }
+    Area {
+        int id PK
+        string name
+        string address
+        int country_id
+    }
+    Address {
+        int id PK
+        int client_id FK
+        int area_id FK
+        string street_name
+        string building_number
+        string floor_number
+        string flat_number
+        boolean is_main
+    }
+            </div>
+
+            <h3>Background Processing</h3>
+            <table>
+                <thead><tr><th>Job / Command</th><th>Schedule</th><th>Purpose</th></tr></thead>
+                <tbody>
+                    <tr><td><code>AssignNewOrder</code></td><td>Every minute</td><td>Auto-assigns "New" orders to nearest pharmacy by area</td></tr>
+                    <tr><td><code>ChangeOrderStatusJob</code></td><td>Every minute</td><td>Transitions "Confirmed" orders to "Delivered"</td></tr>
+                    <tr><td><code>RemoveOldBans</code></td><td>Daily</td><td>Cleans up doctor bans older than 30 days</td></tr>
+                    <tr><td><code>SendInactiveUsersNotification</code></td><td>Daily at 08:00</td><td>Email alerts for inactive users</td></tr>
+                    <tr><td><code>OrderConfirmationJob</code></td><td>On-demand</td><td>Sends order confirmation notification</td></tr>
+                    <tr><td><code>WelcomeEmailJob</code></td><td>On-demand</td><td>Sends welcome email to new clients</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ==================== 2. TARGET OVERVIEW ==================== -->
+    <section id="target-overview">
+        <h2>2. AWS Target Architecture Overview</h2>
+        <div class="card">
+            <p>The target architecture modernizes the monolith into a <strong>containerized deployment on AWS</strong> using managed services for data, messaging, storage, and observability. The design follows AWS Well-Architected Framework pillars: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, and Sustainability.</p>
+
+            <div class="callout">
+                <strong>Design Principles:</strong> Lift-and-containerize first, then progressively decouple. Use managed services to eliminate undifferentiated heavy-lifting. Keep the Laravel application core intact initially — swap infrastructure dependencies (database, queue, cache, storage, email) to AWS-native equivalents.
+            </div>
+
+            <div class="mermaid">
+graph TB
+    subgraph "Internet"
+        Users["End Users<br/>(Web + Mobile)"]
+    end
+
+    subgraph "AWS Cloud — us-east-1"
+        subgraph "Edge"
+            CF["Amazon CloudFront<br/>(CDN)"]
+            WAF["AWS WAF<br/>(Web Firewall)"]
+            R53["Amazon Route 53<br/>(DNS)"]
+        end
+
+        subgraph "VPC — 10.0.0.0/16"
+            subgraph "Public Subnets (AZ-a, AZ-b)"
+                ALB["Application<br/>Load Balancer"]
+                NAT["NAT Gateway"]
+            end
+
+            subgraph "Private Subnets — App Tier"
+                subgraph "ECS Fargate Cluster"
+                    WebService["Web Service<br/>(Laravel + Nginx)<br/>2-10 tasks"]
+                    WorkerService["Worker Service<br/>(Queue Worker)<br/>1-5 tasks"]
+                    SchedulerService["Scheduler Service<br/>(Cron Container)<br/>1 task"]
+                end
+            end
+
+            subgraph "Private Subnets — Data Tier"
+                Aurora[("Amazon Aurora MySQL<br/>Multi-AZ<br/>r6g.large")]
+                Redis["Amazon ElastiCache<br/>(Redis)<br/>Sessions + Cache"]
+            end
+        end
+
+        subgraph "Managed Services"
+            SQS["Amazon SQS<br/>(Job Queue)"]
+            SES["Amazon SES<br/>(Email)"]
+            S3["Amazon S3<br/>(File Storage)"]
+            SM["AWS Secrets Manager"]
+            CW["Amazon CloudWatch<br/>(Logs + Metrics)"]
+            ECR["Amazon ECR<br/>(Container Registry)"]
+        end
+
+        subgraph "External APIs"
+            StripeExt["Stripe API"]
+        end
+    end
+
+    Users --> R53
+    R53 --> CF
+    CF --> WAF
+    WAF --> ALB
+    CF -.->|"Static Assets"| S3
+    ALB --> WebService
+    WebService --> Aurora
+    WebService --> Redis
+    WebService --> SQS
+    WebService --> S3
+    WebService --> StripeExt
+    WorkerService --> SQS
+    WorkerService --> Aurora
+    WorkerService --> SES
+    WorkerService --> S3
+    SchedulerService --> SQS
+    SchedulerService --> Aurora
+    WebService --> SM
+    WorkerService --> SM
+    NAT -.->|"Outbound"| StripeExt
+    NAT -.->|"Outbound"| SES
+
+    style Users fill:#0073BB,color:#fff
+    style CF fill:#8C4FFF,color:#fff
+    style ALB fill:#8C4FFF,color:#fff
+    style Aurora fill:#3F8624,color:#fff
+    style Redis fill:#C7131F,color:#fff
+    style SQS fill:#FF9900,color:#232F3E
+    style SES fill:#DD344C,color:#fff
+    style S3 fill:#3F8624,color:#fff
+    style WebService fill:#FF9900,color:#232F3E
+    style WorkerService fill:#FF9900,color:#232F3E
+    style SchedulerService fill:#FF9900,color:#232F3E
+    style WAF fill:#DD344C,color:#fff
+    style R53 fill:#8C4FFF,color:#fff
+    style ECR fill:#FF9900,color:#232F3E
+    style SM fill:#DD344C,color:#fff
+    style CW fill:#FF4F8B,color:#fff
+    style StripeExt fill:#635BFF,color:#fff
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 3. NETWORK ==================== -->
+    <section id="network">
+        <h2>3. Network &amp; Security Architecture</h2>
+        <div class="card">
+            <div class="mermaid">
+graph TB
+    subgraph "VPC — 10.0.0.0/16"
+        subgraph "Public Subnet AZ-a<br/>10.0.1.0/24"
+            ALB_A["ALB Node"]
+            NAT_A["NAT Gateway"]
+        end
+        subgraph "Public Subnet AZ-b<br/>10.0.2.0/24"
+            ALB_B["ALB Node"]
+        end
+        subgraph "Private App Subnet AZ-a<br/>10.0.10.0/24"
+            ECS_A["ECS Tasks"]
+        end
+        subgraph "Private App Subnet AZ-b<br/>10.0.11.0/24"
+            ECS_B["ECS Tasks"]
+        end
+        subgraph "Private Data Subnet AZ-a<br/>10.0.20.0/24"
+            DB_Primary["Aurora Primary"]
+            Redis_Primary["Redis Primary"]
+        end
+        subgraph "Private Data Subnet AZ-b<br/>10.0.21.0/24"
+            DB_Replica["Aurora Replica"]
+            Redis_Replica["Redis Replica"]
+        end
+    end
+
+    Internet["Internet Gateway"] --> ALB_A
+    Internet --> ALB_B
+    ALB_A --> ECS_A
+    ALB_B --> ECS_B
+    ECS_A --> DB_Primary
+    ECS_B --> DB_Primary
+    ECS_A --> Redis_Primary
+    ECS_B --> Redis_Primary
+    ECS_A --> NAT_A
+    ECS_B --> NAT_A
+    DB_Primary -.->|"Replication"| DB_Replica
+    Redis_Primary -.->|"Replication"| Redis_Replica
+
+    style ALB_A fill:#8C4FFF,color:#fff
+    style ALB_B fill:#8C4FFF,color:#fff
+    style ECS_A fill:#FF9900,color:#232F3E
+    style ECS_B fill:#FF9900,color:#232F3E
+    style DB_Primary fill:#3F8624,color:#fff
+    style DB_Replica fill:#3F8624,color:#fff
+    style Redis_Primary fill:#C7131F,color:#fff
+    style Redis_Replica fill:#C7131F,color:#fff
+            </div>
+
+            <h3>Security Groups</h3>
+            <table>
+                <thead><tr><th>Security Group</th><th>Inbound</th><th>Outbound</th></tr></thead>
+                <tbody>
+                    <tr><td><code>sg-alb</code></td><td>0.0.0.0/0 : 443 (HTTPS)</td><td>sg-ecs : 8080</td></tr>
+                    <tr><td><code>sg-ecs</code></td><td>sg-alb : 8080</td><td>sg-aurora : 3306, sg-redis : 6379, 0.0.0.0/0 : 443</td></tr>
+                    <tr><td><code>sg-aurora</code></td><td>sg-ecs : 3306</td><td>None required</td></tr>
+                    <tr><td><code>sg-redis</code></td><td>sg-ecs : 6379</td><td>None required</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <strong>Best Practice:</strong> All subnets use NACLs as a secondary defense layer. Database and cache subnets have no internet routes. Application containers access external APIs (Stripe, SES) via NAT Gateway. VPC Flow Logs are enabled for auditing.
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 4. COMPUTE ==================== -->
+    <section id="compute">
+        <h2>4. Compute Layer — ECS Fargate</h2>
+        <div class="card">
+            <p>We use <strong>Amazon ECS on Fargate</strong> (serverless containers) to avoid managing EC2 instances. The Laravel application is split into three ECS services sharing the same container image but running different entrypoint commands.</p>
+
+            <div class="mermaid">
+graph LR
+    subgraph "ECS Fargate Cluster"
+        subgraph "Web Service (2-10 tasks)"
+            Nginx["Nginx<br/>:8080"]
+            PHP["PHP-FPM<br/>Laravel App"]
+            Nginx --> PHP
+        end
+
+        subgraph "Worker Service (1-5 tasks)"
+            QueueWorker["php artisan<br/>queue:work sqs"]
+        end
+
+        subgraph "Scheduler Service (1 task)"
+            Cron["php artisan<br/>schedule:work"]
+        end
+    end
+
+    ALB["ALB"] --> Nginx
+    SQS["SQS Queue"] --> QueueWorker
+    Cron -->|"Dispatches jobs"| SQS
+
+    style Nginx fill:#0073BB,color:#fff
+    style PHP fill:#4F5B93,color:#fff
+    style QueueWorker fill:#FF9900,color:#232F3E
+    style Cron fill:#FF9900,color:#232F3E
+    style ALB fill:#8C4FFF,color:#fff
+    style SQS fill:#FF9900,color:#232F3E
+            </div>
+
+            <h3>Service Definitions</h3>
+            <table>
+                <thead><tr><th>ECS Service</th><th>Command</th><th>CPU / Memory</th><th>Scaling</th></tr></thead>
+                <tbody>
+                    <tr><td>Web Service</td><td><code>nginx + php-fpm</code></td><td>0.5 vCPU / 1 GB</td><td>Target tracking: CPU 60%, 2–10 tasks</td></tr>
+                    <tr><td>Worker Service</td><td><code>php artisan queue:work sqs --tries=3</code></td><td>0.25 vCPU / 0.5 GB</td><td>SQS-based: scale on ApproximateNumberOfMessages, 1–5 tasks</td></tr>
+                    <tr><td>Scheduler Service</td><td><code>php artisan schedule:work</code></td><td>0.25 vCPU / 0.5 GB</td><td>Fixed: 1 task (singleton)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Container Image Strategy</h3>
+            <ul>
+                <li><strong>Single Dockerfile</strong> producing a multi-stage image: Composer dependencies &rarr; npm build &rarr; production image with Nginx + PHP-FPM</li>
+                <li><strong>Amazon ECR</strong> as the private container registry with image scanning enabled</li>
+                <li>ECS services differ by <code>command</code> override at task definition level, not by image</li>
+                <li>Environment variables injected via <strong>AWS Secrets Manager</strong> + ECS task definition <code>secrets</code> field</li>
+            </ul>
+
+            <div class="callout success">
+                <strong>Why Fargate over EKS?</strong> The Pharmacy System is a single-application workload without complex service mesh requirements. Fargate reduces operational overhead — no cluster management, patching, or node scaling. If future microservice extraction demands advanced orchestration, migration to EKS is straightforward.
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 5. DATA ==================== -->
+    <section id="data">
+        <h2>5. Data Layer — Aurora MySQL &amp; ElastiCache</h2>
+        <div class="card">
+            <div class="grid-2">
+                <div>
+                    <h3><span class="service-icon">DB</span> Amazon Aurora MySQL</h3>
+                    <ul>
+                        <li><strong>Engine:</strong> Aurora MySQL 3.x (MySQL 8.0 compatible)</li>
+                        <li><strong>Instance:</strong> db.r6g.large (Multi-AZ)</li>
+                        <li><strong>Storage:</strong> Aurora auto-scaling (10 GB – 128 TB)</li>
+                        <li><strong>Replicas:</strong> 1 reader replica for read-heavy DataTable queries</li>
+                        <li><strong>Backups:</strong> Continuous backups with 7-day PITR</li>
+                        <li><strong>Encryption:</strong> At-rest (KMS) + in-transit (TLS)</li>
+                    </ul>
+
+                    <h4>Migration from MySQL to Aurora</h4>
+                    <ul>
+                        <li>Use <strong>AWS DMS</strong> for initial full-load + CDC replication</li>
+                        <li>Run <code>php artisan migrate</code> against Aurora to validate schema compatibility</li>
+                        <li>Enum columns are fully supported in Aurora MySQL</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3><span class="service-icon">RD</span> Amazon ElastiCache (Redis)</h3>
+                    <ul>
+                        <li><strong>Engine:</strong> Redis 7.x (cluster mode disabled)</li>
+                        <li><strong>Instance:</strong> cache.r6g.large (Multi-AZ)</li>
+                        <li><strong>Use Cases:</strong></li>
+                    </ul>
+                    <table>
+                        <thead><tr><th>Use Case</th><th>Laravel Config</th></tr></thead>
+                        <tbody>
+                            <tr><td>Session storage</td><td><code>SESSION_DRIVER=redis</code></td></tr>
+                            <tr><td>Application cache</td><td><code>CACHE_DRIVER=redis</code></td></tr>
+                            <tr><td>Rate limiting</td><td>Built-in Laravel rate limiter</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="callout">
+                        <strong>Why Redis over DynamoDB for sessions?</strong> Laravel has first-class Redis support. Switching <code>SESSION_DRIVER</code> to <code>redis</code> is a single env-var change with zero code modifications.
+                    </div>
+                </div>
+            </div>
+
+            <h3>Data Architecture Diagram</h3>
+            <div class="mermaid">
+graph LR
+    subgraph "ECS Tasks"
+        Web["Web Service"]
+        Worker["Worker Service"]
+    end
+
+    subgraph "Data Tier"
+        AuroraW[("Aurora Writer<br/>AZ-a")]
+        AuroraR[("Aurora Reader<br/>AZ-b")]
+        RedisP["Redis Primary<br/>AZ-a"]
+        RedisR["Redis Replica<br/>AZ-b"]
+    end
+
+    Web -->|"Writes"| AuroraW
+    Web -->|"Reads<br/>(DataTables)"| AuroraR
+    Worker -->|"Writes"| AuroraW
+    Web -->|"Sessions<br/>+ Cache"| RedisP
+    AuroraW -.->|"Replication"| AuroraR
+    RedisP -.->|"Replication"| RedisR
+
+    style AuroraW fill:#3F8624,color:#fff
+    style AuroraR fill:#3F8624,color:#fff
+    style RedisP fill:#C7131F,color:#fff
+    style RedisR fill:#C7131F,color:#fff
+    style Web fill:#FF9900,color:#232F3E
+    style Worker fill:#FF9900,color:#232F3E
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 6. STORAGE ==================== -->
+    <section id="storage">
+        <h2>6. Object Storage &amp; CDN</h2>
+        <div class="card">
+            <div class="grid-2">
+                <div>
+                    <h3><span class="service-icon">S3</span> Amazon S3</h3>
+                    <p>Replace Laravel's local filesystem with S3 for durable, scalable file storage.</p>
+                    <table>
+                        <thead><tr><th>Content Type</th><th>S3 Bucket / Prefix</th><th>Access</th></tr></thead>
+                        <tbody>
+                            <tr><td>Prescription images</td><td><code>pharmacy-files/prescriptions/</code></td><td>Private (pre-signed URLs)</td></tr>
+                            <tr><td>User avatars</td><td><code>pharmacy-files/avatars/</code></td><td>Public via CloudFront</td></tr>
+                            <tr><td>Vite build assets</td><td><code>pharmacy-assets/</code></td><td>Public via CloudFront</td></tr>
+                        </tbody>
+                    </table>
+                    <h4>Laravel Configuration</h4>
+                    <ul>
+                        <li>Set <code>FILESYSTEM_DISK=s3</code></li>
+                        <li>Configure <code>AWS_BUCKET</code>, <code>AWS_DEFAULT_REGION</code></li>
+                        <li>Use IAM task role (no access keys in env)</li>
+                        <li>Enable S3 bucket versioning for prescriptions</li>
+                        <li>Lifecycle policy: move to S3-IA after 90 days</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3><span class="service-icon">CF</span> Amazon CloudFront</h3>
+                    <p>Global CDN for static assets and avatar images.</p>
+                    <ul>
+                        <li><strong>Origin 1:</strong> ALB (dynamic requests) — cache disabled</li>
+                        <li><strong>Origin 2:</strong> S3 (static assets) — TTL 30 days</li>
+                        <li><strong>Origin 3:</strong> S3 (avatars) — TTL 7 days</li>
+                        <li>HTTPS-only with ACM certificate</li>
+                        <li>Gzip/Brotli compression enabled</li>
+                        <li>Cache behavior paths:
+                            <ul>
+                                <li><code>/build/*</code> &rarr; S3 assets origin</li>
+                                <li><code>/avatars/*</code> &rarr; S3 avatars origin</li>
+                                <li><code>Default (*)</code> &rarr; ALB origin</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 7. ASYNC ==================== -->
+    <section id="async">
+        <h2>7. Asynchronous Processing &amp; Messaging</h2>
+        <div class="card">
+            <p>The current system uses Laravel's <code>sync</code> queue driver, executing jobs in-process. The queue.php already has an <strong>SQS driver pre-configured</strong>, making migration straightforward.</p>
+
+            <div class="mermaid">
+sequenceDiagram
+    participant Client as Browser / API
+    participant Web as Web Service
+    participant SQS as Amazon SQS
+    participant Worker as Worker Service
+    participant Aurora as Aurora MySQL
+    participant SES as Amazon SES
+
+    Client->>Web: POST /orders (Create Order)
+    Web->>Aurora: Insert order (status: New)
+    Web->>SQS: Dispatch WelcomeEmailJob
+    Web-->>Client: 201 Created
+
+    Note over SQS,Worker: Asynchronous processing
+
+    Worker->>SQS: Poll for messages
+    SQS-->>Worker: WelcomeEmailJob payload
+    Worker->>SES: Send welcome email
+    Worker->>SQS: Delete message (ACK)
+
+    Note over Web,SQS: Scheduler runs every minute
+
+    Web->>SQS: AssignNewOrder (scheduled)
+    Worker->>SQS: Poll
+    SQS-->>Worker: AssignNewOrder payload
+    Worker->>Aurora: Update order pharmacy_id
+    Worker->>SQS: Dispatch OrderConfirmationJob
+    Worker->>SQS: Poll
+    SQS-->>Worker: OrderConfirmationJob
+    Worker->>SES: Send confirmation email
+            </div>
+
+            <h3>SQS Configuration</h3>
+            <table>
+                <thead><tr><th>Queue</th><th>Type</th><th>Visibility Timeout</th><th>DLQ</th><th>Purpose</th></tr></thead>
+                <tbody>
+                    <tr><td><code>pharmacy-default</code></td><td>Standard</td><td>90s</td><td>Yes (5 retries)</td><td>All Laravel jobs</td></tr>
+                    <tr><td><code>pharmacy-default-dlq</code></td><td>Standard</td><td>—</td><td>—</td><td>Failed jobs for inspection</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Laravel Environment Changes</h3>
+            <ul>
+                <li><code>QUEUE_CONNECTION=sqs</code></li>
+                <li><code>SQS_PREFIX=https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID</code></li>
+                <li><code>SQS_QUEUE=pharmacy-default</code></li>
+                <li>IAM task role provides <code>sqs:SendMessage</code>, <code>sqs:ReceiveMessage</code>, <code>sqs:DeleteMessage</code></li>
+            </ul>
+
+            <div class="callout success">
+                <strong>Zero-Code Change:</strong> Laravel's SQS driver is pre-configured in <code>config/queue.php</code>. Switching from sync to SQS requires only environment variable changes — no application code modifications.
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 8. NOTIFICATIONS ==================== -->
+    <section id="notifications">
+        <h2>8. Notification Services</h2>
+        <div class="card">
+            <div class="grid-2">
+                <div>
+                    <h3><span class="service-icon">SE</span> Amazon SES (Email)</h3>
+                    <p>Replace Mailtrap SMTP with Amazon SES for production email delivery.</p>
+                    <ul>
+                        <li><strong>Laravel config:</strong> <code>MAIL_MAILER=ses</code></li>
+                        <li>Verify sending domain via DNS (DKIM + SPF)</li>
+                        <li>Request production access (move out of sandbox)</li>
+                        <li>Configure bounce/complaint SNS topics</li>
+                        <li>Estimated volume: &lt; 1,000 emails/day</li>
+                    </ul>
+                    <h4>Email Types</h4>
+                    <table>
+                        <thead><tr><th>Notification</th><th>Trigger</th></tr></thead>
+                        <tbody>
+                            <tr><td>Welcome Email</td><td>New client registration</td></tr>
+                            <tr><td>Email Verification</td><td>Registration / resend</td></tr>
+                            <tr><td>Order Confirmation</td><td>Order assigned to pharmacy</td></tr>
+                            <tr><td>Inactive User Alert</td><td>Daily at 08:00 UTC</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h3><span class="service-icon">WS</span> Real-Time Events</h3>
+                    <p>Two options for replacing Pusher:</p>
+                    <h4>Option A: Keep Pusher (Recommended for Phase 1)</h4>
+                    <ul>
+                        <li>No code changes needed</li>
+                        <li>Pusher free tier supports 200K messages/day</li>
+                        <li>Store keys in Secrets Manager</li>
+                    </ul>
+                    <h4>Option B: AWS IoT Core + WebSockets (Phase 3)</h4>
+                    <ul>
+                        <li>Full AWS-native solution</li>
+                        <li>Custom Laravel broadcasting driver</li>
+                        <li>Higher implementation effort</li>
+                        <li>Better for high-scale scenarios</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 9. CI/CD ==================== -->
+    <section id="cicd">
+        <h2>9. CI/CD Pipeline</h2>
+        <div class="card">
+            <div class="mermaid">
+graph LR
+    subgraph "Source"
+        GH["GitHub<br/>Repository"]
+    end
+
+    subgraph "CI — GitHub Actions"
+        Lint["PHPStan<br/>Lint"]
+        Test["PHPUnit<br/>Tests"]
+        Build["Docker Build<br/>& Push to ECR"]
+        Scan["ECR Image<br/>Scan"]
+    end
+
+    subgraph "CD — AWS"
+        ECR["Amazon ECR"]
+        TD["Update ECS<br/>Task Definition"]
+        Deploy["ECS Rolling<br/>Deployment"]
+        Health["ALB Health<br/>Check"]
+    end
+
+    GH -->|"push / PR"| Lint
+    Lint --> Test
+    Test --> Build
+    Build --> ECR
+    ECR --> Scan
+    Scan -->|"No critical CVEs"| TD
+    TD --> Deploy
+    Deploy --> Health
+    Health -->|"Healthy"| Done["Done"]
+    Health -->|"Unhealthy"| Rollback["Auto Rollback"]
+
+    style GH fill:#24292E,color:#fff
+    style ECR fill:#FF9900,color:#232F3E
+    style Deploy fill:#FF9900,color:#232F3E
+    style Done fill:#3F8624,color:#fff
+    style Rollback fill:#DD344C,color:#fff
+            </div>
+
+            <h3>Pipeline Stages</h3>
+            <table>
+                <thead><tr><th>Stage</th><th>Tool</th><th>Details</th></tr></thead>
+                <tbody>
+                    <tr><td>Lint &amp; Static Analysis</td><td>Laravel Pint + PHPStan</td><td>Code style + type checking</td></tr>
+                    <tr><td>Unit / Integration Tests</td><td>PHPUnit</td><td>Run against MySQL service container</td></tr>
+                    <tr><td>Build</td><td>Docker + GitHub Actions</td><td>Multi-stage build, push to ECR</td></tr>
+                    <tr><td>Security Scan</td><td>ECR Image Scanning</td><td>Block deploy on critical CVEs</td></tr>
+                    <tr><td>Deploy Staging</td><td>ECS + CodeDeploy</td><td>Blue/green to staging cluster</td></tr>
+                    <tr><td>Deploy Production</td><td>ECS + CodeDeploy</td><td>Rolling update with health checks, auto-rollback</td></tr>
+                    <tr><td>DB Migrations</td><td>ECS Run Task</td><td>One-off <code>php artisan migrate --force</code> before deploy</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <strong>Database Migration Strategy:</strong> Migrations are executed as a one-off ECS task (<code>aws ecs run-task</code>) before the new image is deployed. This ensures schema changes are applied before new code rolls out. Use <code>--force</code> flag in production.
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 10. OBSERVABILITY ==================== -->
+    <section id="observability">
+        <h2>10. Observability &amp; Monitoring</h2>
+        <div class="card">
+            <div class="mermaid">
+graph TB
+    subgraph "Application"
+        ECS["ECS Tasks<br/>(stdout/stderr)"]
+        Laravel["Laravel Logs<br/>(stderr channel)"]
+    end
+
+    subgraph "Amazon CloudWatch"
+        CWLogs["CloudWatch Logs<br/>(Log Groups)"]
+        CWMetrics["CloudWatch Metrics<br/>(CPU, Memory, Request Count)"]
+        CWAlarms["CloudWatch Alarms"]
+        CWDash["CloudWatch Dashboard"]
+    end
+
+    subgraph "Alerting"
+        SNS["Amazon SNS"]
+        Email["Email / Slack"]
+    end
+
+    ECS --> CWLogs
+    Laravel --> CWLogs
+    ECS --> CWMetrics
+    CWMetrics --> CWAlarms
+    CWAlarms --> SNS
+    SNS --> Email
+    CWMetrics --> CWDash
+    CWLogs --> CWDash
+
+    style CWLogs fill:#FF4F8B,color:#fff
+    style CWMetrics fill:#FF4F8B,color:#fff
+    style CWAlarms fill:#FF4F8B,color:#fff
+    style SNS fill:#DD344C,color:#fff
+            </div>
+
+            <h3>Key Metrics &amp; Alarms</h3>
+            <table>
+                <thead><tr><th>Metric</th><th>Source</th><th>Alarm Threshold</th><th>Action</th></tr></thead>
+                <tbody>
+                    <tr><td>Web Service CPU</td><td>ECS</td><td>&gt; 80% for 5 min</td><td>Scale out + SNS alert</td></tr>
+                    <tr><td>SQS Queue Depth</td><td>SQS</td><td>&gt; 100 messages for 5 min</td><td>Scale workers + alert</td></tr>
+                    <tr><td>Aurora Connections</td><td>RDS</td><td>&gt; 80% max</td><td>SNS alert</td></tr>
+                    <tr><td>5xx Error Rate</td><td>ALB</td><td>&gt; 1% for 3 min</td><td>SNS alert + auto-rollback</td></tr>
+                    <tr><td>DLQ Messages</td><td>SQS DLQ</td><td>&gt; 0</td><td>SNS alert (failed jobs)</td></tr>
+                    <tr><td>SES Bounce Rate</td><td>SES</td><td>&gt; 5%</td><td>SNS alert</td></tr>
+                    <tr><td>Redis Memory</td><td>ElastiCache</td><td>&gt; 80%</td><td>SNS alert</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ==================== 11. SECURITY ==================== -->
+    <section id="security">
+        <h2>11. Security &amp; Compliance</h2>
+        <div class="card">
+            <div class="grid-2">
+                <div>
+                    <h3>Secrets Management</h3>
+                    <table>
+                        <thead><tr><th>Secret</th><th>Storage</th></tr></thead>
+                        <tbody>
+                            <tr><td>APP_KEY</td><td>Secrets Manager</td></tr>
+                            <tr><td>DB credentials</td><td>Secrets Manager (auto-rotated)</td></tr>
+                            <tr><td>Stripe API keys</td><td>Secrets Manager</td></tr>
+                            <tr><td>Pusher credentials</td><td>Secrets Manager</td></tr>
+                            <tr><td>MAIL_PASSWORD</td><td>Eliminated (SES uses IAM)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h3>IAM &amp; Access Control</h3>
+                    <ul>
+                        <li><strong>ECS Task Role</strong> — least-privilege policy for S3, SQS, SES, Secrets Manager</li>
+                        <li><strong>ECS Execution Role</strong> — ECR pull + CloudWatch Logs + Secrets Manager read</li>
+                        <li><strong>No hardcoded credentials</strong> — all access via IAM roles</li>
+                        <li><strong>AWS WAF</strong> — OWASP Top 10 rule set on CloudFront</li>
+                        <li><strong>ACM</strong> — Managed TLS certificates (auto-renewed)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Compliance Checklist</h3>
+            <ul>
+                <li>Encryption at rest: Aurora (KMS), S3 (SSE-S3), ElastiCache (KMS), EBS (KMS)</li>
+                <li>Encryption in transit: TLS everywhere (ALB, Aurora, Redis, S3)</li>
+                <li>VPC Flow Logs enabled and sent to CloudWatch Logs</li>
+                <li>AWS CloudTrail enabled for API auditing</li>
+                <li>Prescription images stored with S3 Object Lock (compliance mode) if HIPAA applies</li>
+                <li>ECS containers run as non-root user</li>
+                <li>ECR image scanning on push</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ==================== 12. SERVICE MAPPING ==================== -->
+    <section id="service-mapping">
+        <h2>12. Service Mapping — Monolith to AWS</h2>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Current (Monolith)</th><th>AWS Target</th><th>Config Change</th><th>Code Change</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>PHP built-in / Apache</td><td>ECS Fargate (Nginx + PHP-FPM)</td><td>Dockerfile + Task Def</td><td>None</td></tr>
+                    <tr><td>MySQL (self-hosted)</td><td>Amazon Aurora MySQL</td><td><code>DB_HOST</code>, <code>DB_PORT</code></td><td>None</td></tr>
+                    <tr><td>Session: file driver</td><td>ElastiCache Redis</td><td><code>SESSION_DRIVER=redis</code></td><td>None</td></tr>
+                    <tr><td>Cache: file driver</td><td>ElastiCache Redis</td><td><code>CACHE_DRIVER=redis</code></td><td>None</td></tr>
+                    <tr><td>Queue: sync driver</td><td>Amazon SQS</td><td><code>QUEUE_CONNECTION=sqs</code></td><td>None</td></tr>
+                    <tr><td>Local file storage</td><td>Amazon S3</td><td><code>FILESYSTEM_DISK=s3</code></td><td>Minimal (use <code>Storage</code> facade)</td></tr>
+                    <tr><td>SMTP / Mailtrap</td><td>Amazon SES</td><td><code>MAIL_MAILER=ses</code></td><td>None</td></tr>
+                    <tr><td>Pusher (WebSocket)</td><td>Pusher (Phase 1) / IoT Core (Phase 3)</td><td>Secrets Manager</td><td>None (Phase 1)</td></tr>
+                    <tr><td>Stripe (Payments)</td><td>Stripe (unchanged)</td><td>Secrets Manager</td><td>None</td></tr>
+                    <tr><td>Cron (<code>schedule:work</code>)</td><td>ECS Scheduled Task</td><td>ECS Task Def</td><td>None</td></tr>
+                    <tr><td>.env file secrets</td><td>AWS Secrets Manager</td><td>ECS secrets injection</td><td>None</td></tr>
+                    <tr><td>No monitoring</td><td>CloudWatch + SNS</td><td>Log driver: awslogs</td><td>None</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout success">
+                <strong>Key Insight:</strong> Laravel's service-container architecture and environment-driven configuration means the vast majority of AWS service swaps require <strong>only .env changes</strong> — no application code modifications. The SQS driver is already pre-configured in <code>config/queue.php</code>.
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 13. MIGRATION PHASES ==================== -->
+    <section id="migration-phases">
+        <h2>13. Migration Roadmap — Phased Approach</h2>
+        <div class="card">
+            <div class="mermaid">
+gantt
+    title Pharmacy System AWS Migration Roadmap
+    dateFormat  YYYY-MM-DD
+    axisFormat  %b %Y
+
+    section Phase 1 - Foundation
+    Infrastructure as Code (Terraform)       :p1a, 2026-05-01, 14d
+    VPC, Subnets, Security Groups            :p1b, after p1a, 7d
+    Aurora MySQL provisioning                :p1c, after p1b, 5d
+    ElastiCache Redis provisioning           :p1d, after p1b, 5d
+    ECR + Dockerfile creation                :p1e, 2026-05-01, 10d
+    S3 buckets + CloudFront                  :p1f, after p1b, 5d
+    Secrets Manager setup                    :p1g, after p1b, 3d
+    CI/CD pipeline (GitHub Actions)          :p1h, after p1e, 7d
+
+    section Phase 2 - Migrate
+    Database migration (DMS)                 :p2a, 2026-06-01, 7d
+    Deploy to ECS Staging                    :p2b, after p2a, 5d
+    Switch env vars (SQS, S3, SES, Redis)    :p2c, after p2b, 3d
+    Integration testing on staging           :p2d, after p2c, 7d
+    File migration (local to S3)             :p2e, after p2b, 5d
+    DNS cutover (Route 53)                   :p2f, after p2d, 2d
+    Production go-live                       :p2g, after p2f, 1d
+
+    section Phase 3 - Optimize
+    Auto-scaling tuning                      :p3a, 2026-07-01, 7d
+    CloudWatch dashboards + alarms           :p3b, after p3a, 5d
+    WAF rule tuning                          :p3c, after p3a, 5d
+    Cost optimization review                 :p3d, after p3b, 5d
+    Performance testing                      :p3e, after p3c, 7d
+    Disaster recovery drill                  :p3f, after p3e, 3d
+            </div>
+
+            <h3><span class="phase-tag phase-1">PHASE 1</span> Foundation (Weeks 1–4)</h3>
+            <p>Provision all AWS infrastructure using Terraform / CloudFormation. Create container images. Establish CI/CD pipeline.</p>
+            <table>
+                <thead><tr><th>Task</th><th>Deliverable</th><th>Risk</th></tr></thead>
+                <tbody>
+                    <tr><td>IaC for VPC, ECS, Aurora, Redis, S3</td><td>Terraform modules</td><td>Low</td></tr>
+                    <tr><td>Dockerfile (multi-stage)</td><td>Production container image</td><td>Low</td></tr>
+                    <tr><td>CI/CD pipeline</td><td>GitHub Actions workflow</td><td>Low</td></tr>
+                    <tr><td>Secrets Manager setup</td><td>All secrets migrated</td><td>Low</td></tr>
+                    <tr><td>Domain + ACM certificate</td><td>TLS-enabled endpoint</td><td>Low</td></tr>
+                </tbody>
+            </table>
+
+            <h3><span class="phase-tag phase-2">PHASE 2</span> Migrate (Weeks 5–8)</h3>
+            <p>Migrate data, deploy to staging, validate, and cut over production traffic.</p>
+            <table>
+                <thead><tr><th>Task</th><th>Deliverable</th><th>Risk</th></tr></thead>
+                <tbody>
+                    <tr><td>Database migration via DMS</td><td>Aurora with production data</td><td>Medium</td></tr>
+                    <tr><td>File migration to S3</td><td>All prescriptions + avatars in S3</td><td>Low</td></tr>
+                    <tr><td>Staging deployment &amp; testing</td><td>Validated staging environment</td><td>Medium</td></tr>
+                    <tr><td>Env-var switch (SQS, SES, Redis)</td><td>All services on AWS</td><td>Low</td></tr>
+                    <tr><td>DNS cutover (Route 53)</td><td>Live traffic on AWS</td><td>High</td></tr>
+                </tbody>
+            </table>
+
+            <div class="callout warn">
+                <strong>Cutover Strategy:</strong> Use a blue/green DNS approach via Route 53 weighted routing. Start with 10% traffic to AWS, monitor for 24h, then shift to 100%. Keep the old environment running for 7 days as a fallback.
+            </div>
+
+            <h3><span class="phase-tag phase-3">PHASE 3</span> Optimize (Weeks 9–12)</h3>
+            <p>Fine-tune scaling, monitoring, security, and costs. Conduct DR drills.</p>
+            <table>
+                <thead><tr><th>Task</th><th>Deliverable</th><th>Risk</th></tr></thead>
+                <tbody>
+                    <tr><td>Auto-scaling policy tuning</td><td>Optimized ECS scaling</td><td>Low</td></tr>
+                    <tr><td>CloudWatch dashboards</td><td>Operational visibility</td><td>Low</td></tr>
+                    <tr><td>WAF rule optimization</td><td>Tuned security rules</td><td>Low</td></tr>
+                    <tr><td>Load testing</td><td>Performance baseline</td><td>Medium</td></tr>
+                    <tr><td>DR drill</td><td>Validated recovery process</td><td>Low</td></tr>
+                    <tr><td>Cost review &amp; right-sizing</td><td>Optimized spend</td><td>Low</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ==================== 14. COST ==================== -->
+    <section id="cost">
+        <h2>14. Cost Estimation &amp; Optimization</h2>
+        <div class="card">
+            <p>Estimated monthly costs for a <strong>small-to-medium production workload</strong> (us-east-1).</p>
+            <table>
+                <thead><tr><th>Service</th><th>Configuration</th><th>Est. Monthly Cost</th></tr></thead>
+                <tbody>
+                    <tr><td>ECS Fargate (Web)</td><td>2 tasks @ 0.5 vCPU / 1 GB, 24/7</td><td>$58</td></tr>
+                    <tr><td>ECS Fargate (Worker)</td><td>1 task @ 0.25 vCPU / 0.5 GB, 24/7</td><td>$15</td></tr>
+                    <tr><td>ECS Fargate (Scheduler)</td><td>1 task @ 0.25 vCPU / 0.5 GB, 24/7</td><td>$15</td></tr>
+                    <tr><td>Aurora MySQL</td><td>db.r6g.large, Multi-AZ, 50 GB</td><td>$420</td></tr>
+                    <tr><td>ElastiCache Redis</td><td>cache.r6g.large, Multi-AZ</td><td>$290</td></tr>
+                    <tr><td>Application Load Balancer</td><td>1 ALB + data processing</td><td>$25</td></tr>
+                    <tr><td>CloudFront</td><td>100 GB transfer/month</td><td>$10</td></tr>
+                    <tr><td>S3</td><td>50 GB storage + requests</td><td>$3</td></tr>
+                    <tr><td>SQS</td><td>&lt; 1M requests/month</td><td>$1</td></tr>
+                    <tr><td>SES</td><td>&lt; 10K emails/month</td><td>$1</td></tr>
+                    <tr><td>Secrets Manager</td><td>10 secrets</td><td>$4</td></tr>
+                    <tr><td>NAT Gateway</td><td>1 NAT + data processing</td><td>$35</td></tr>
+                    <tr><td>CloudWatch</td><td>Logs + metrics + alarms</td><td>$15</td></tr>
+                    <tr><td>Route 53</td><td>1 hosted zone + queries</td><td>$1</td></tr>
+                    <tr><td><strong>Total</strong></td><td></td><td><strong>~$893/month</strong></td></tr>
+                </tbody>
+            </table>
+
+            <h3>Cost Optimization Strategies</h3>
+            <ul>
+                <li><strong>Fargate Spot:</strong> Use for worker tasks (tolerant to interruption) — up to 70% savings</li>
+                <li><strong>Aurora Serverless v2:</strong> If traffic is bursty, switch to Serverless for pay-per-ACU pricing</li>
+                <li><strong>ElastiCache Serverless:</strong> Consider for variable cache workloads</li>
+                <li><strong>Reserved Instances:</strong> 1-year RI for Aurora and ElastiCache saves ~30%</li>
+                <li><strong>S3 Intelligent-Tiering:</strong> Auto-tier infrequently accessed prescription images</li>
+                <li><strong>Right-sizing:</strong> Start small, use CloudWatch Container Insights to right-size after 30 days</li>
+            </ul>
+
+            <div class="callout">
+                <strong>Start Smaller:</strong> For development/staging, use Aurora Serverless v2 (min 0.5 ACU) and a single-node Redis to reduce costs to ~$250/month.
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 15. RISKS ==================== -->
+    <section id="risks">
+        <h2>15. Risks &amp; Mitigations</h2>
+        <div class="card">
+            <table>
+                <thead><tr><th>Risk</th><th>Impact</th><th>Likelihood</th><th>Mitigation</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>Data loss during MySQL &rarr; Aurora migration</td>
+                        <td>High</td>
+                        <td>Low</td>
+                        <td>Use DMS with CDC replication. Validate row counts and checksums. Maintain source as fallback.</td>
+                    </tr>
+                    <tr>
+                        <td>Enum column incompatibility</td>
+                        <td>Medium</td>
+                        <td>Low</td>
+                        <td>Aurora MySQL is fully MySQL-compatible. Test all migrations on Aurora before cutover.</td>
+                    </tr>
+                    <tr>
+                        <td>Session loss during DNS cutover</td>
+                        <td>Medium</td>
+                        <td>Medium</td>
+                        <td>Migrate sessions to Redis before cutover. Redis is shared across old and new infra during transition.</td>
+                    </tr>
+                    <tr>
+                        <td>File storage URLs break (local &rarr; S3)</td>
+                        <td>Medium</td>
+                        <td>Medium</td>
+                        <td>Update <code>APP_URL</code> and filesystem config. Use Laravel's <code>Storage::url()</code> facade consistently.</td>
+                    </tr>
+                    <tr>
+                        <td>Increased latency from sync &rarr; async queue</td>
+                        <td>Low</td>
+                        <td>Low</td>
+                        <td>SQS adds ~10ms overhead. Order assignment already runs on a schedule. Net UX improvement.</td>
+                    </tr>
+                    <tr>
+                        <td>Cost overrun</td>
+                        <td>Medium</td>
+                        <td>Medium</td>
+                        <td>AWS Budgets alerts at 80% and 100% thresholds. Monthly cost review. Start with smaller instances.</td>
+                    </tr>
+                    <tr>
+                        <td>Stripe webhook delivery to new endpoint</td>
+                        <td>Medium</td>
+                        <td>Low</td>
+                        <td>Update Stripe webhook URL before cutover. Use Route 53 to ensure zero-downtime transition.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ==================== SUMMARY ==================== -->
+    <section>
+        <h2>Summary — Architecture Decision Records</h2>
+        <div class="card">
+            <table>
+                <thead><tr><th>Decision</th><th>Choice</th><th>Rationale</th></tr></thead>
+                <tbody>
+                    <tr><td>Compute</td><td>ECS Fargate</td><td>Serverless containers; no cluster ops; right-sized for single-app workload</td></tr>
+                    <tr><td>Database</td><td>Aurora MySQL</td><td>Drop-in MySQL replacement; Multi-AZ; auto-scaling storage; managed backups</td></tr>
+                    <tr><td>Cache / Sessions</td><td>ElastiCache Redis</td><td>Native Laravel support; single env-var change; sub-ms latency</td></tr>
+                    <tr><td>Queue</td><td>Amazon SQS</td><td>Pre-configured in Laravel; serverless; DLQ support; scales to any volume</td></tr>
+                    <tr><td>Email</td><td>Amazon SES</td><td>Native Laravel driver; pay-per-email; high deliverability; IAM auth</td></tr>
+                    <tr><td>File Storage</td><td>Amazon S3</td><td>Native Laravel driver; 11 nines durability; lifecycle policies</td></tr>
+                    <tr><td>CDN</td><td>CloudFront</td><td>Global edge network; S3 origin integration; managed TLS</td></tr>
+                    <tr><td>Secrets</td><td>Secrets Manager</td><td>Auto-rotation; ECS native integration; audit via CloudTrail</td></tr>
+                    <tr><td>IaC</td><td>Terraform</td><td>Multi-cloud flexibility; mature ecosystem; state management</td></tr>
+                    <tr><td>CI/CD</td><td>GitHub Actions</td><td>Already using GitHub; native ECR/ECS actions; free tier generous</td></tr>
+                    <tr><td>Monitoring</td><td>CloudWatch</td><td>Native AWS integration; Container Insights for ECS; unified dashboards</td></tr>
+                    <tr><td>DNS</td><td>Route 53</td><td>Health checks; weighted routing for blue/green; alias records for ALB</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<footer>
+    <p>Pharmacy Management System — AWS Target Architecture Document</p>
+    <p>Generated for COG-GTM/Pharmacy_System | Hyperscaler Target: Amazon Web Services (AWS)</p>
+</footer>
+
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'base',
+        themeVariables: {
+            primaryColor: '#FF9900',
+            primaryTextColor: '#232F3E',
+            primaryBorderColor: '#D5DBDB',
+            lineColor: '#545B64',
+            secondaryColor: '#F2F3F3',
+            tertiaryColor: '#FFFFFF',
+            fontSize: '14px'
+        },
+        flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+        sequence: { useMaxWidth: true, actorMargin: 80 },
+        gantt: { useMaxWidth: true, fontSize: 12, barHeight: 20, barGap: 4 }
+    });
+</script>
+
+</body>
+</html>

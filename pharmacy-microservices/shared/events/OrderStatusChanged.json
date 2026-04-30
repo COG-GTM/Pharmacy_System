@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OrderStatusChanged",
+  "description": "Published by Order Service when an order status changes",
+  "type": "object",
+  "required": ["event", "data"],
+  "properties": {
+    "event": { "const": "order.status_changed" },
+    "data": {
+      "type": "object",
+      "required": ["order_id", "old_status", "new_status", "changed_at"],
+      "properties": {
+        "order_id": { "type": "integer" },
+        "old_status": { "type": "string" },
+        "new_status": { "type": "string" },
+        "changed_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

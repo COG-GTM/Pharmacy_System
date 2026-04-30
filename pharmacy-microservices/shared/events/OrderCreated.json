@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OrderCreated",
+  "description": "Published by Order Service when a new order is created",
+  "type": "object",
+  "required": ["event", "data"],
+  "properties": {
+    "event": { "const": "order.created" },
+    "data": {
+      "type": "object",
+      "required": ["order_id", "user_id", "status", "price", "created_at"],
+      "properties": {
+        "order_id": { "type": "integer" },
+        "user_id": { "type": "integer" },
+        "pharmacy_id": { "type": ["integer", "null"] },
+        "status": { "type": "string" },
+        "price": { "type": "number" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

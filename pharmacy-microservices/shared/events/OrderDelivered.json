@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OrderDelivered",
+  "description": "Published by Order Service when an order is delivered",
+  "type": "object",
+  "required": ["event", "data"],
+  "properties": {
+    "event": { "const": "order.delivered" },
+    "data": {
+      "type": "object",
+      "required": ["order_id", "pharmacy_id", "price", "delivered_at"],
+      "properties": {
+        "order_id": { "type": "integer" },
+        "pharmacy_id": { "type": "integer" },
+        "price": { "type": "number" },
+        "delivered_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

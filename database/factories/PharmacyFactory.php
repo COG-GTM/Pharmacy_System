@@ -17,7 +17,7 @@ class PharmacyFactory extends Factory
     public function definition()
     {
         return [
-            'id' => fake()->unique()->numberBetween(1, 1000000),
+            'id' => fake()->unique()->numerify('29############'),
             'user_id' => User::factory(),
             'area_id' => Area::factory(),
             'pharmacy_name' => fake()->company().' Pharmacy',

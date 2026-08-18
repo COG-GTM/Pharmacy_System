@@ -16,7 +16,7 @@ class ClientFactory extends Factory
     public function definition()
     {
         return [
-            'id' => fake()->unique()->numberBetween(1, 1000000),
+            'id' => fake()->unique()->numerify('29############'),
             'user_id' => User::factory(),
             'gender' => fake()->randomElement(['Male', 'Female']),
             'date_of_birth' => fake()->date(),

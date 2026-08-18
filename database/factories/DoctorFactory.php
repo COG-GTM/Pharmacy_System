@@ -17,7 +17,7 @@ class DoctorFactory extends Factory
     public function definition()
     {
         return [
-            'id' => fake()->unique()->numberBetween(1, 1000000),
+            'id' => fake()->unique()->numerify('29############'),
             'user_id' => User::factory(),
             'pharmacy_id' => Pharmacy::factory(),
             'avatar_image' => 'default.jpg',

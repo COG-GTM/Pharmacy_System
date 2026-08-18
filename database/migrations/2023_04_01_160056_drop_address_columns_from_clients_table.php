@@ -13,14 +13,21 @@ return new class extends Migration
      */
     public function up()
     {
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('clients', function (Blueprint $table) {
+                $table->dropForeign('clients_area_id_foreign');
+            });
+        }
+
         Schema::table('clients', function (Blueprint $table) {
-            $table->dropForeign('clients_area_id_foreign');
-            $table->dropColumn('area_id');
-            $table->dropColumn('street_name');
-            $table->dropColumn('building_no');
-            $table->dropColumn('floor_number');
-            $table->dropColumn('flat_number');
-            $table->dropColumn('is_main');
+            $table->dropColumn([
+                'area_id',
+                'street_name',
+                'building_no',
+                'floor_number',
+                'flat_number',
+                'is_main',
+            ]);
         });
     }
 

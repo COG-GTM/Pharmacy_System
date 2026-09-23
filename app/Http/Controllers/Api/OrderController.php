@@ -74,8 +74,14 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::find($id);
-        $order_prescriptions = Prescription::where('order_id', $id)->get();
+        $client = auth()->user();
+        $order = Order::where('user_id', $client->id)->find($id);
+        if (!$order) {
+            return response()->json([
+                'message' => 'This user does not have any order with this id',
+            ], 404);
+        }
+        $order_prescriptions = Prescription::where('order_id', $order->id)->get();
         return response()->json([
             'message' => 'Order details',
             'data' => new OrderResource($order),
@@ -85,15 +91,21 @@ class OrderController extends Controller
 
     public function update(Request $request, $id)
     {
-        $order = Order::find($id);
+        $client = auth()->user();
+        $order = Order::where('user_id', $client->id)->find($id);
+        if (!$order) {
+            return response()->json([
+                'message' => 'This user does not have any order with this id',
+            ], 404);
+        }
         if ($order->status == "New") { //New Order
             if ($request->hasFile('prescriptions')) {
-                $images = Prescription::where("order_id", $id)->get();
+                $images = Prescription::where("order_id", $order->id)->get();
                 foreach ($images as $image) {
                     $directory = 'public/images/prescriptions/' . $image->image;
                     Storage::delete($directory);
                 }
-                Prescription::where("order_id", $id)->delete();
+                Prescription::where("order_id", $order->id)->delete();
                 foreach ($request->file('prescriptions') as $prescription) {
                     $prescription_name = 'image-' . $prescription->getClientOriginalName();
                     $prescription->storeAs('public/images/prescriptions', $prescription_name);

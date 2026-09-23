@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use App\Support\ImageUpload;
 use Illuminate\Http\UploadedFile;
+use RuntimeException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -41,12 +42,33 @@ class ImageUploadTest extends TestCase
         }
     }
 
+    public function test_it_fails_when_the_file_cannot_be_written()
+    {
+        Storage::fake('local');
+
+        $upload = $this->getMockBuilder(UploadedFile::class)
+            ->setConstructorArgs([$this->temporaryFile($this->jpegBytes()), 'avatar.jpg', 'image/jpeg', null, true])
+            ->onlyMethods(['getMimeType', 'storeAs'])
+            ->getMock();
+        $upload->method('getMimeType')->willReturn('image/jpeg');
+        $upload->method('storeAs')->willReturn(false);
+
+        $this->expectException(RuntimeException::class);
+
+        ImageUpload::store($upload, 'public/pharmacies_Images');
+    }
+
     private function uploadedFile(string $name, string $contents): UploadedFile
     {
-        $path = tempnam(sys_get_temp_dir(), 'upload');
+        return new UploadedFile($this->temporaryFile($contents), $name, 'image/jpeg', null, true);
+    }
+
+    private function temporaryFile(string $contents): string
+    {
+        $path = (string) tempnam(sys_get_temp_dir(), 'upload');
         file_put_contents($path, $contents);
 
-        return new UploadedFile($path, $name, 'image/jpeg', null, true);
+        return $path;
     }
 
     private function jpegBytes(): string

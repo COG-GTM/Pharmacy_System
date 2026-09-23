@@ -62,8 +62,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::delete('/orders/{id}', [OrderController::class, 'destroy'])->name('orders.destroy');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
 
-        Route::get('/orders/stauts/{id}', [OrderController::class, 'updatestatus'])->name('orders.updatestatus');
-        Route::get('/orders/confirm/{id}', [OrderController::class, 'confirm'])->name('orders.confirm');
+        Route::get('/orders/{id}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+        Route::post('/orders/{id}/cancel', [OrderController::class, 'updatestatus'])->name('orders.updatestatus');
 
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
@@ -113,7 +113,7 @@ Route::group(['middleware' => ['auth']], function () {
 
         //Pharmacy Routes
         Route::delete('/pharmacies/{pharmacy}', [PharmacyController::class, 'destroy'])->name('pharmacies.destroy');
-        Route::get('/pharmacies/restore/{pharmacy}', [PharmacyController::class, 'restore'])->name('pharmacies.restore');
+        Route::post('/pharmacies/restore/{pharmacy}', [PharmacyController::class, 'restore'])->name('pharmacies.restore');
 
         //Clients Routes
         Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');

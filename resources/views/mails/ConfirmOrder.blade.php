@@ -61,7 +61,7 @@
         </ul>
         <div class="btn-container">
             <a href="{{route('stripe.get',$order->id)}}" type="submit" class="btn btn-success" disabled>Confirm Order</a>
-            <a href="{{route("orders.updatestatus",$order->id)}}" type="submit" class="btn btn-danger" disabled>Cancel Order</a>
+            <a href="{{route("orders.cancel",$order->id)}}" type="submit" class="btn btn-danger" disabled>Cancel Order</a>
         </div>
 
     </div>

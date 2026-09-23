@@ -88,11 +88,13 @@ class StripePaymentController extends Controller
             throw new RuntimeException('Order price is not payable');
         }
 
-        $charge = (new StripeClient($secret))->charges->create([
+        $charge = app(StripeClient::class)->charges->create([
             'amount' => $amount,
             'currency' => 'usd',
             'source' => $stripeToken,
             'description' => "Pharmacy System order #{$order->id}",
+        ], [
+            'idempotency_key' => 'order-' . $order->id,
         ]);
 
         if ($charge->status !== 'succeeded' || $charge->amount !== $amount || $charge->currency !== 'usd') {

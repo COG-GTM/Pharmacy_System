@@ -8,8 +8,12 @@ use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Mockery;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
+use Stripe\Charge;
+use Stripe\Service\ChargeService;
+use Stripe\StripeClient;
 use Tests\TestCase;
 
 class StripePaymentControllerTest extends TestCase
@@ -91,6 +95,55 @@ class StripePaymentControllerTest extends TestCase
 
         $response->assertRedirect();
         $this->assertSame('WaitingForUserConfirmation', $order->fresh()->status);
+    }
+
+    public function test_owner_order_is_confirmed_once_stripe_reports_a_succeeded_charge(): void
+    {
+        config(['services.stripe.secret' => 'sk_test_fake']);
+        $owner = $this->createClient();
+        $order = $this->createOrder($owner);
+        $this->fakeStripeCharge(['status' => 'succeeded', 'amount' => 2550, 'currency' => 'usd']);
+
+        $response = $this->actingAs($owner)->post('/stripe', [
+            'order_id' => $order->id,
+            'stripeToken' => 'tok_visa',
+        ]);
+
+        $response->assertOk();
+        $this->assertSame('Confirmed', $order->fresh()->status);
+    }
+
+    public function test_order_is_not_confirmed_when_stripe_charges_a_different_amount(): void
+    {
+        config(['services.stripe.secret' => 'sk_test_fake']);
+        $owner = $this->createClient();
+        $order = $this->createOrder($owner);
+        $this->fakeStripeCharge(['status' => 'succeeded', 'amount' => 100, 'currency' => 'usd']);
+
+        $response = $this->actingAs($owner)->post('/stripe', [
+            'order_id' => $order->id,
+            'stripeToken' => 'tok_visa',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertSame('WaitingForUserConfirmation', $order->fresh()->status);
+    }
+
+    private function fakeStripeCharge(array $charge): void
+    {
+        $charges = Mockery::mock(ChargeService::class);
+        $charges->shouldReceive('create')
+            ->once()
+            ->withArgs(function (array $params, array $options) {
+                return $params['amount'] === 2550
+                    && $params['currency'] === 'usd'
+                    && isset($options['idempotency_key']);
+            })
+            ->andReturn(Charge::constructFrom($charge));
+
+        $client = Mockery::mock(StripeClient::class);
+        $client->shouldReceive('getService')->with('charges')->andReturn($charges);
+        $this->app->instance(StripeClient::class, $client);
     }
 
     private function createClient(): User

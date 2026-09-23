@@ -1,85 +1,102 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\Order;
 use Illuminate\Http\Request;
-use Session;
-use Stripe;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
+use Stripe\Exception\ApiErrorException;
+use Stripe\StripeClient;
 
 class StripePaymentController extends Controller
 {
     /**
-     * success response method.
+     * Show the payment page of an order owned by the authenticated user.
      *
      * @return \Illuminate\Http\Response
      */
     public function stripe($order_id)
     {
-        //dd($id);
-        $order = Order::where('id', $order_id)->first();
-        return view('stripe', ["order" => $order]);
+        $order = $this->findOwnedOrder($order_id);
+
+        return view('stripe', ['order' => $order]);
     }
 
     /**
-     * success response method.
+     * Charge the order and confirm it only once the charge succeeded.
      *
      * @return \Illuminate\Http\Response
      */
-    // public function stripePost(Request $request)
-    // {
-    //     Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
-
-    //     Stripe\Charge::create([
-    //         "amount" => 100 * 100,
-    //         "currency" => "usd",
-    //         "source" => $request->stripeToken,
-    //         "description" => "Test payment from itsolutionstuff.com."
-    //     ]);
-
-    //     Session::flash('success', 'Payment successful!');
-
-    //     return back();
-    // }
-
-    /**
-
-     * success response method.
-
-     *
-
-     * @return \Illuminate\Http\Response
-
-     */
-
     public function stripePost(Request $request)
     {
-        //dd($request->all());
-        $order_id = $request->order_id;
-        if (is_numeric($order_id)) {
-            /* Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
-            Stripe\Charge::create([
-                "amount" => 100 * 100,
-                "currency" => "usd",
-                "source" => $request->stripeToken,
-                "description" => "Test payment from itsolutionstuff.com."
-            ]);
-            Session::flash('success', 'Payment successful!'); */
+        $validated = $request->validate([
+            'order_id' => ['required', 'integer'],
+            'stripeToken' => ['required', 'string'],
+        ]);
 
+        $order = $this->findOwnedOrder($validated['order_id']);
 
-            $order = Order::where('id', $order_id)->first();
-            if ($order->status == "WaitingForUserConfirmation") {
-                $order->update([
-                    "status" =>  "Confirmed"
-                ]);
-                return view('actions.confirm', ['order' => $order, 'state' => "Confirmednow"]);
-            } elseif ($order->status == "Canceled") {
-                return view('actions.confirm', ['order' => $order, 'state' => "Canceled"]);
-            } elseif ($order->status == "Confirmed") {
-                return view('actions.confirm', ['order' => $order, 'state' => "Confirmed"]);
-            } elseif ($order->status == "Delivered") {
-                return view('actions.confirm', ['order' => $order, 'state' => "Delivered"]);
+        if ($order->status == 'WaitingForUserConfirmation') {
+            try {
+                $this->charge($order, $validated['stripeToken']);
+            } catch (ApiErrorException | RuntimeException $exception) {
+                Log::error('Stripe payment failed for order ' . $order->id . ': ' . $exception->getMessage());
+
+                return back()->with('error', 'Payment failed, the order was not confirmed!')->with('timeout', 5000);
             }
+
+            $order->update([
+                'status' => 'Confirmed',
+            ]);
+
+            return view('actions.confirm', ['order' => $order, 'state' => 'Confirmednow']);
+        } elseif ($order->status == 'Canceled') {
+            return view('actions.confirm', ['order' => $order, 'state' => 'Canceled']);
+        } elseif ($order->status == 'Confirmed') {
+            return view('actions.confirm', ['order' => $order, 'state' => 'Confirmed']);
+        } elseif ($order->status == 'Delivered') {
+            return view('actions.confirm', ['order' => $order, 'state' => 'Delivered']);
+        }
+    }
+
+    /**
+     * Resolve an order that belongs to the authenticated user, or abort with a 404.
+     */
+    private function findOwnedOrder($orderId): Order
+    {
+        return Order::where('id', $orderId)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+    }
+
+    /**
+     * Collect the order price through Stripe. Throws unless the charge succeeded.
+     */
+    private function charge(Order $order, string $stripeToken): void
+    {
+        $secret = config('services.stripe.secret');
+        if (empty($secret)) {
+            throw new RuntimeException('Stripe secret key is not configured');
+        }
+
+        $amount = (int) round(((float) $order->price) * 100);
+        if ($amount <= 0) {
+            throw new RuntimeException('Order price is not payable');
+        }
+
+        $charge = (new StripeClient($secret))->charges->create([
+            'amount' => $amount,
+            'currency' => 'usd',
+            'source' => $stripeToken,
+            'description' => "Pharmacy System order #{$order->id}",
+        ]);
+
+        if ($charge->status !== 'succeeded' || $charge->amount !== $amount || $charge->currency !== 'usd') {
+            throw new RuntimeException('Stripe charge was not completed');
         }
     }
 }

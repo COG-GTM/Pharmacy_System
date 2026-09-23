@@ -9,6 +9,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\MedicineController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\RevenueController;
 use App\Http\Controllers\ChartController;
 use  Illuminate\Support\Facades\Auth;
@@ -66,6 +67,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/orders/confirm/{id}', [OrderController::class, 'confirm'])->name('orders.confirm');
 
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+        Route::get('/orders/{order}/prescriptions/{prescription}', [PrescriptionController::class, 'show'])->name('orders.prescriptions.show');
         Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
         Route::put('/orders/{orders}', [OrderController::class, 'update'])->name('orders.update');
 

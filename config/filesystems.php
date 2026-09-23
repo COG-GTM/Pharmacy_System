@@ -46,9 +46,8 @@ return [
 
         'prescriptions' => [
             'driver' => 'local',
-            'root' => storage_path('app/public/prescriptions'),
-            'url' => env('APP_URL').'/storage/prescriptions',
-            'visibility' => 'public',
+            'root' => storage_path('app/prescriptions'),
+            'visibility' => 'private',
             'throw' => false,
         ],
 

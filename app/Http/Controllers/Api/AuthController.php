@@ -83,13 +83,23 @@ class AuthController extends Controller
 
         return $token;
     }
-    public function resend($id)
+    public function resend(Request $request, $id = null)
     {
-        $client = Client::find($id);
-        if ($client->user->email_verified_at) {
+        $user = $request->user();
+
+        if ($id !== null) {
+            $client = $user->client;
+            if (!$client || (string) $client->id !== (string) $id) {
+                return response()->json('This action is unauthorized.', 403);
+            }
+        }
+
+        if ($user->hasVerifiedEmail()) {
             return response()->json('User already have verified email!', 422);
-        } 
-        $client->user->sendEmailVerificationNotification();
+        }
+
+        $user->sendEmailVerificationNotification();
+
         return response()->json('The email verification has been resubmitted');
     }
 }

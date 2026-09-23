@@ -75,6 +75,9 @@ class StripePaymentController extends Controller
 
     /**
      * Collect the order price through Stripe. Throws unless the charge succeeded.
+     *
+     * The idempotency key covers one order and one card token, so replaying the same
+     * submission cannot charge twice while a retry with new card details still goes through.
      */
     private function charge(Order $order, string $stripeToken): void
     {
@@ -94,7 +97,7 @@ class StripePaymentController extends Controller
             'source' => $stripeToken,
             'description' => "Pharmacy System order #{$order->id}",
         ], [
-            'idempotency_key' => 'order-' . $order->id,
+            'idempotency_key' => 'order-' . $order->id . '-' . hash('sha256', $stripeToken),
         ]);
 
         if ($charge->status !== 'succeeded' || $charge->amount !== $amount || $charge->currency !== 'usd') {

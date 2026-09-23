@@ -137,7 +137,7 @@ class StripePaymentControllerTest extends TestCase
             ->withArgs(function (array $params, array $options) {
                 return $params['amount'] === 2550
                     && $params['currency'] === 'usd'
-                    && isset($options['idempotency_key']);
+                    && $options['idempotency_key'] === 'order-1-' . hash('sha256', 'tok_visa');
             })
             ->andReturn(Charge::constructFrom($charge));
 

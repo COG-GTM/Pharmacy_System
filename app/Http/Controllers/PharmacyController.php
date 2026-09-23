@@ -127,11 +127,12 @@ class PharmacyController extends Controller
                     $priority = $request->priority;
                 }
 
+                $superseded_avatar = null;
                 if ($request->hasFile('avatar_image')) {
-                    if ($selectedPharmacy->avatar_image && $selectedPharmacy->avatar_image != 'default-avatar.jpg') {
-                        Storage::delete('public/pharmacies_Images/'.$selectedPharmacy->avatar_image);
-                    }
                     $avatar_name = ImageUpload::store($request->file('avatar_image'), 'public/pharmacies_Images');
+                    if ($selectedPharmacy->avatar_image && $selectedPharmacy->avatar_image != 'default-avatar.jpg') {
+                        $superseded_avatar = $selectedPharmacy->avatar_image;
+                    }
                 } else {
                     $avatar_name = $selectedPharmacy->avatar_image;
                 }
@@ -144,6 +145,9 @@ class PharmacyController extends Controller
                 'avatar_image' => $avatar_name,
                 ]);
 
+                if ($superseded_avatar) {
+                    Storage::delete('public/pharmacies_Images/'.$superseded_avatar);
+                }
 
             } catch (\Illuminate\Database\QueryException $exception) {
                 return redirect()->route('pharmacies.index')->with('error', 'Error in Updating Pharmacy!')->with('timeout', 5000);

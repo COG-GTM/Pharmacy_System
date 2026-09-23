@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Pharmacy;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +15,9 @@ class UpdatePharmacyRequest extends FormRequest
      */
     public function authorize()
     {
-        return true;
+        $pharmacy = Pharmacy::where('id', $this->route('pharmacy'))->first();
+
+        return $pharmacy === null || $this->user()->can('update', $pharmacy);
     }
 
     /**

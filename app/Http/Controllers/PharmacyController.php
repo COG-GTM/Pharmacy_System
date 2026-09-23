@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Order;
 use App\Models\Doctor;
 use App\Models\OrderMedicine;
+use App\Support\ImageUpload;
 use Illuminate\Foundation\Auth\User as AuthUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -30,9 +31,7 @@ class PharmacyController extends Controller
     public function store(StorePharmacyRequest $request)
     {
         if ($request->hasFile('avatar_image')) {
-            $avatar = $request->file('avatar_image');
-            $avatar_name = $avatar->getClientOriginalName();
-            $avatar->storeAs('public/pharmacies_Images', $avatar_name);
+            $avatar_name = ImageUpload::store($request->file('avatar_image'), 'public/pharmacies_Images');
         } else {
             $avatar_name = 'default-avatar.jpg';
         }
@@ -128,13 +127,12 @@ class PharmacyController extends Controller
                     $priority = $request->priority;
                 }
 
+                $superseded_avatar = null;
                 if ($request->hasFile('avatar_image')) {
+                    $avatar_name = ImageUpload::store($request->file('avatar_image'), 'public/pharmacies_Images');
                     if ($selectedPharmacy->avatar_image && $selectedPharmacy->avatar_image != 'default-avatar.jpg') {
-                        Storage::delete('public/pharmacies_Images/'.$selectedPharmacy->avatar_image);
+                        $superseded_avatar = $selectedPharmacy->avatar_image;
                     }
-                    $avatar = $request->file('avatar_image');
-                    $avatar_name = $avatar->getClientOriginalName();
-                    $avatar->storeAs('public/pharmacies_Images', $avatar_name);
                 } else {
                     $avatar_name = $selectedPharmacy->avatar_image;
                 }
@@ -147,6 +145,9 @@ class PharmacyController extends Controller
                 'avatar_image' => $avatar_name,
                 ]);
 
+                if ($superseded_avatar) {
+                    Storage::delete('public/pharmacies_Images/'.$superseded_avatar);
+                }
 
             } catch (\Illuminate\Database\QueryException $exception) {
                 return redirect()->route('pharmacies.index')->with('error', 'Error in Updating Pharmacy!')->with('timeout', 5000);

@@ -9,11 +9,14 @@ use App\Models\Prescription;
 use App\Models\Order;
 use App\Models\OrderMedicine;
 use App\Models\Pharmacy;
+use App\Support\ImageUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Address;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\OrderResource;
+use Throwable;
 
 
 class OrderController extends Controller
@@ -35,6 +38,10 @@ class OrderController extends Controller
         $addresses = Address::where('client_id', $client->Client->id)->get();
         if ($addresses->find($delivering_address_id)) {
             if ($request->hasFile('prescriptions')) {
+                $request->validate([
+                    'prescriptions.*' => ['image', 'mimes:jpeg,png', 'max:4096'],
+                ]);
+                $prescription_names = $this->storePrescriptions($request->file('prescriptions'));
                 $order = new Order([
                     'delivering_address_id' => $delivering_address_id,
                     'doctor_id' => null,
@@ -45,15 +52,14 @@ class OrderController extends Controller
                     'user_id' => $client->id,
                     'pharmacy_id' => null,
                 ]);
-                $order->save();
-                foreach ($request->file('prescriptions') as $prescription) {
-                    $prescription_name = 'image-' . $prescription->getClientOriginalName();
-                    $prescription->storeAs('public/images/prescriptions', $prescription_name);
-                    $order_prescription = new Prescription([
-                        'order_id' => $order->id,
-                        'image' => $prescription_name,
-                    ]);
-                    $order_prescription->save();
+                try {
+                    DB::transaction(function () use ($order, $prescription_names) {
+                        $order->save();
+                        $this->savePrescriptions($order->id, $prescription_names);
+                    });
+                } catch (Throwable $e) {
+                    $this->deletePrescriptionFiles($prescription_names);
+                    throw $e;
                 }
             } else {
                 return response()->json([
@@ -88,21 +94,21 @@ class OrderController extends Controller
         $order = Order::find($id);
         if ($order->status == "New") { //New Order
             if ($request->hasFile('prescriptions')) {
-                $images = Prescription::where("order_id", $id)->get();
-                foreach ($images as $image) {
-                    $directory = 'public/images/prescriptions/' . $image->image;
-                    Storage::delete($directory);
+                $request->validate([
+                    'prescriptions.*' => ['image', 'mimes:jpeg,png', 'max:4096'],
+                ]);
+                $prescription_names = $this->storePrescriptions($request->file('prescriptions'));
+                $superseded = Prescription::where("order_id", $id)->pluck('image')->all();
+                try {
+                    DB::transaction(function () use ($id, $prescription_names) {
+                        Prescription::where("order_id", $id)->delete();
+                        $this->savePrescriptions($id, $prescription_names);
+                    });
+                } catch (Throwable $e) {
+                    $this->deletePrescriptionFiles($prescription_names);
+                    throw $e;
                 }
-                Prescription::where("order_id", $id)->delete();
-                foreach ($request->file('prescriptions') as $prescription) {
-                    $prescription_name = 'image-' . $prescription->getClientOriginalName();
-                    $prescription->storeAs('public/images/prescriptions', $prescription_name);
-                    $order_prescription = new Prescription([
-                        'order_id' => $order->id,
-                        'image' => $prescription_name,
-                    ]);
-                    $order_prescription->save();
-                }
+                $this->deletePrescriptionFiles($superseded);
             }
 
         }
@@ -112,6 +118,46 @@ class OrderController extends Controller
         ], 200);
 
 
+    }
+
+    /**
+     * Write every uploaded prescription to disk up front, removing the files
+     * already written if a later one fails.
+     *
+     * @param  array  $prescriptions
+     * @return array  the stored file names
+     */
+    private function storePrescriptions(array $prescriptions)
+    {
+        $names = [];
+        try {
+            foreach ($prescriptions as $prescription) {
+                $names[] = ImageUpload::store($prescription, 'public/images/prescriptions', 'prescriptions');
+            }
+        } catch (Throwable $e) {
+            $this->deletePrescriptionFiles($names);
+            throw $e;
+        }
+
+        return $names;
+    }
+
+    private function savePrescriptions($order_id, array $names)
+    {
+        foreach ($names as $name) {
+            $prescription = new Prescription([
+                'order_id' => $order_id,
+                'image' => $name,
+            ]);
+            $prescription->save();
+        }
+    }
+
+    private function deletePrescriptionFiles(array $names)
+    {
+        foreach ($names as $name) {
+            Storage::delete('public/images/prescriptions/' . $name);
+        }
     }
 
 

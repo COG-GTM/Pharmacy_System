@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateDoctorRequest;
 use App\Models\Doctor;
 use App\Models\Pharmacy;
 use App\Models\User;
+use App\Support\ImageUpload;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\DataTables;
@@ -43,9 +44,7 @@ class DoctorController extends Controller
             ]);
 
             if ($request->hasFile('avatar_image')) {
-                $avatar = $request->file('avatar_image');
-                $avatar_name = $avatar->getClientOriginalName();
-                $avatar->storeAs('public/doctors_Images', $avatar_name);
+                $avatar_name = ImageUpload::store($request->file('avatar_image'), 'public/doctors_Images');
             } else {
                 $avatar_name = 'default-avatar.jpg';
             }
@@ -116,13 +115,12 @@ class DoctorController extends Controller
                     'email' => $request->email,
                 ]);
 
+                $superseded_avatar = null;
                 if ($request->hasFile('avatar_image')) {
+                    $avatar_name = ImageUpload::store($request->file('avatar_image'), 'public/doctors_Images');
                     if ($selectedDoctor->avatar_image && $selectedDoctor->avatar_image != 'default-avatar.jpg') {
-                        Storage::delete('public/doctors_Images/' . $selectedDoctor->avatar_image);
+                        $superseded_avatar = $selectedDoctor->avatar_image;
                     }
-                    $avatar = $request->file('avatar_image');
-                    $avatar_name = $avatar->getClientOriginalName();
-                    $avatar->storeAs('public/doctors_Images', $avatar_name);
                 } else {
                     $avatar_name = $selectedDoctor->avatar_image;
                 }
@@ -152,6 +150,10 @@ class DoctorController extends Controller
                     'is_banned' => $ban,
                     'avatar_image' => $avatar_name,
                 ]);
+
+                if ($superseded_avatar) {
+                    Storage::delete('public/doctors_Images/' . $superseded_avatar);
+                }
             } catch (\Illuminate\Database\QueryException $exception) {
                 return redirect()->route('doctors.index')->with('error', 'Error in Updating Doctor!')->with('timeout', 5000);
             }

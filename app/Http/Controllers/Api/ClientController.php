@@ -7,6 +7,7 @@ use App\Http\Requests\Api\UpdateClientRequest;
 use App\Http\Resources\Api\ClientResource;
 use App\Models\Client;
 use App\Models\User;
+use App\Support\ImageUpload;
 use Illuminate\Http\Request;
 
 class ClientController extends Controller
@@ -30,9 +31,7 @@ class ClientController extends Controller
                 $clientData = [];
                 //  handle image
                 if ($request->hasFile('avatar_image')) {
-                    $avatar = $request->file('avatar_image');
-                    $clientData['avatar_image'] = $avatar->getClientOriginalName();
-                    $avatar->storeAs('public/clients_Images', $clientData['avatar_image']);
+                    $clientData['avatar_image'] = ImageUpload::store($request->file('avatar_image'), 'public/clients_Images');
                 } else {
                     $clientData['avatar_image'] = 'default.jpg';
                 }

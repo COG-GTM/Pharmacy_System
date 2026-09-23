@@ -46,7 +46,8 @@ class PharmaciesDataTable extends DataTable
                         <div class='d-flex flex-row justify-content-center btn-group btn-group-toggle' data-toggle='buttons'>
                                 <div class='d-flex flex-row gap-2'>
                                     <div>
-                                        <form method='GET' class='restore_item' action='" . Route('pharmacies.restore', $pharmacy->id) . "'>
+                                        <form method='POST' class='restore_item' action='" . Route('pharmacies.restore', $pharmacy->id) . "'>
+                                            <input type='hidden' name='_token' value='" . csrf_token() . "'>
                                             <button type='submit' class='btn btn-success rounded' onclick='restoreDeletedPharmacy(event)' id='" . $pharmacy->id . " 'data-bs-toggle='modal' data-bs-target='#restorePharmacyModal'>
                                                 Restore
                                             </button>

@@ -161,11 +161,35 @@ class OrderController extends Controller
         return to_route('orders.index')->with('success', 'order deleted successfully!')->with('timeout', 5000);
     }
 
+    public function cancel($order_id)
+    {
+        if (!is_numeric($order_id)) {
+            abort(404);
+        }
+
+        $order = Order::where('id', $order_id)->first();
+        if (is_null($order)) {
+            abort(404);
+        }
+
+        if ($order->status == "WaitingForUserConfirmation") {
+            return view('actions.confirm-cancel', ['order' => $order]);
+        }
+
+        return view('actions.cancel', [
+            'order' => $order,
+            'state' => $order->status == "Canceled" ? "Canceled" : "Confirmed",
+        ]);
+    }
+
     public function updatestatus($order_id)
     {
         if (is_numeric($order_id)) {
 
             $order = Order::where('id', $order_id)->first();
+            if (is_null($order)) {
+                abort(404);
+            }
             if ($order->status == "WaitingForUserConfirmation") {
                 $order->update([
                     "status" =>  "Canceled"

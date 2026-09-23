@@ -75,8 +75,10 @@ class DoctorController extends Controller
     public function destroy($id)
     {
         if (is_numeric($id)) {
+            $doctor = Doctor::where('id', $id)->firstOrFail();
+            $this->authorize('delete', $doctor);
             try {
-                Doctor::where('id', $id)->delete();
+                $doctor->delete();
             } catch (\Illuminate\Database\QueryException $exception) {
                 return to_route('doctors.index')->with('error', 'Delete related records first');
             }
@@ -87,6 +89,7 @@ class DoctorController extends Controller
     public function show($id)
     {
         $doctor = Doctor::where('id', $id)->firstOrFail();
+        $this->authorize('view', $doctor);
         if(auth()->user()->hasRole('admin')){
             $pharmacies = Pharmacy::all();
         }
@@ -110,6 +113,7 @@ class DoctorController extends Controller
         if (is_numeric($doctor)) {
             try {
                 $selectedDoctor = Doctor::where('id', $doctor)->firstOrFail();
+                $this->authorize('update', $selectedDoctor);
                 $user = $selectedDoctor->user;
                 $user->update([
                     'name' => $request->name,
@@ -161,6 +165,7 @@ class DoctorController extends Controller
 
     public function ban(Doctor $doctor)
     {
+        $this->authorize('ban', $doctor);
         $doctor->user->ban([
             'comment' => 'Enjoy your ban!',
         ]);
@@ -171,6 +176,7 @@ class DoctorController extends Controller
 
     public function unban(Doctor $doctor)
     {
+        $this->authorize('unban', $doctor);
         $doctor->user->unban();
         $doctor->update(['is_banned' => 0]);
         $doctor->user->update(['banned_at' => null]);

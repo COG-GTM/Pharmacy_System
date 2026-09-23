@@ -9,6 +9,7 @@ use App\Models\Prescription;
 use App\Models\Order;
 use App\Models\OrderMedicine;
 use App\Models\Pharmacy;
+use App\Support\UploadedImageStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Address;
@@ -35,6 +36,9 @@ class OrderController extends Controller
         $addresses = Address::where('client_id', $client->Client->id)->get();
         if ($addresses->find($delivering_address_id)) {
             if ($request->hasFile('prescriptions')) {
+                $request->validate([
+                    'prescriptions.*' => ['image', 'mimes:jpg,jpeg,png', 'max:4096'],
+                ]);
                 $order = new Order([
                     'delivering_address_id' => $delivering_address_id,
                     'doctor_id' => null,
@@ -47,8 +51,7 @@ class OrderController extends Controller
                 ]);
                 $order->save();
                 foreach ($request->file('prescriptions') as $prescription) {
-                    $prescription_name = 'image-' . $prescription->getClientOriginalName();
-                    $prescription->storeAs('public/images/prescriptions', $prescription_name);
+                    $prescription_name = UploadedImageStorage::store($prescription, 'images/prescriptions');
                     $order_prescription = new Prescription([
                         'order_id' => $order->id,
                         'image' => $prescription_name,
@@ -88,6 +91,9 @@ class OrderController extends Controller
         $order = Order::find($id);
         if ($order->status == "New") { //New Order
             if ($request->hasFile('prescriptions')) {
+                $request->validate([
+                    'prescriptions.*' => ['image', 'mimes:jpg,jpeg,png', 'max:4096'],
+                ]);
                 $images = Prescription::where("order_id", $id)->get();
                 foreach ($images as $image) {
                     $directory = 'public/images/prescriptions/' . $image->image;
@@ -95,8 +101,7 @@ class OrderController extends Controller
                 }
                 Prescription::where("order_id", $id)->delete();
                 foreach ($request->file('prescriptions') as $prescription) {
-                    $prescription_name = 'image-' . $prescription->getClientOriginalName();
-                    $prescription->storeAs('public/images/prescriptions', $prescription_name);
+                    $prescription_name = UploadedImageStorage::store($prescription, 'images/prescriptions');
                     $order_prescription = new Prescription([
                         'order_id' => $order->id,
                         'image' => $prescription_name,

@@ -7,6 +7,7 @@ use App\Http\Requests\StoreClientRequest;
 use App\Http\Resources\Api\ClientResource;
 use App\Models\Client;
 use App\Models\User;
+use App\Support\UploadedImageStorage;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\Events\Registered;
@@ -28,9 +29,7 @@ class AuthController extends Controller
             ]);
             //  handle image
             if ($request->hasFile('avatar_image')) {
-                $avatar = $request->file('avatar_image');
-                $avatar_name = $avatar->getClientOriginalName();
-                $avatar->storeAs('public/clients_Images', $avatar_name);
+                $avatar_name = UploadedImageStorage::store($request->file('avatar_image'), 'clients_Images');
             } else {
                 $avatar_name = 'default.jpg';
             }

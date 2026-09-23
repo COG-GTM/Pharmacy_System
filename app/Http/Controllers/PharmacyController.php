@@ -21,7 +21,11 @@ class PharmacyController extends Controller
 {
     public function index(PharmaciesDataTable $dataTable)
     {
-        $pharmacies = Pharmacy::withTrashed()->get();
+        if (auth()->user()->hasRole('admin')) {
+            $pharmacies = Pharmacy::withTrashed()->get();
+        } else {
+            $pharmacies = Pharmacy::withTrashed()->where('user_id', auth()->user()->id)->get();
+        }
         $areas = Area::all();
         return $dataTable->render('pharmacy.index', ['pharmacies' => DataTables::of($pharmacies)->make(true), 'areas' => $areas]);
     }
@@ -99,7 +103,8 @@ class PharmacyController extends Controller
 
     public function show($pharmacy)
     {
-        $pharmacy = Pharmacy::where('id', $pharmacy)->first();
+        $pharmacy = Pharmacy::where('id', $pharmacy)->firstOrFail();
+        $this->authorize('view', $pharmacy);
         $areas = Area::all();
         $user = User::where('id', $pharmacy->user_id)->first();
         return response()->json([
@@ -114,6 +119,7 @@ class PharmacyController extends Controller
         if (is_numeric($pharmacy)) {
             try {
                 $selectedPharmacy = Pharmacy::where('id', $pharmacy)->firstOrFail();
+                $this->authorize('update', $selectedPharmacy);
                 $user = $selectedPharmacy->user;
                 $user->update([
                     'name' => $request->name,

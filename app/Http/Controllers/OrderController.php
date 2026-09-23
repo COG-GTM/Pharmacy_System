@@ -92,7 +92,12 @@ class OrderController extends Controller
         $doctor_name = User::find($doctor->user_id ?? 1);
         $address = Address::find($order->delivering_address_id);
         $area = Area::find($address->area_id);
-        $prescriptions = Prescription::where('order_id', $order->id)->get();
+        $prescriptions = Prescription::where('order_id', $order->id)->get()->map(function (Prescription $prescription) use ($order) {
+            return [
+                'id' => $prescription->id,
+                'url' => route('orders.prescriptions.show', ['order' => $order->id, 'prescription' => $prescription->id]),
+            ];
+        });
 
 
         return response()->json([

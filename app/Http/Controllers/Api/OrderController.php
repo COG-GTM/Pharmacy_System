@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\PrescriptionUploadRequest;
 use App\Jobs\AssignNewOrder;
 use App\Models\Area;
 use App\Models\Prescription;
@@ -25,7 +26,7 @@ class OrderController extends Controller
         return OrderResource::collection($orders);
     }
 
-    public function create(Request $request)
+    public function create(PrescriptionUploadRequest $request)
     {
         $orders = Order::where('status', "New")->get();
         $client = auth()->user();
@@ -47,13 +48,7 @@ class OrderController extends Controller
                 ]);
                 $order->save();
                 foreach ($request->file('prescriptions') as $prescription) {
-                    $prescription_name = 'image-' . $prescription->getClientOriginalName();
-                    $prescription->storeAs('public/images/prescriptions', $prescription_name);
-                    $order_prescription = new Prescription([
-                        'order_id' => $order->id,
-                        'image' => $prescription_name,
-                    ]);
-                    $order_prescription->save();
+                    Prescription::storeFor($order, $prescription);
                 }
             } else {
                 return response()->json([
@@ -74,8 +69,16 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::find($id);
-        $order_prescriptions = Prescription::where('order_id', $id)->get();
+        $order = $this->findOwnedOrder($id);
+        if (is_null($order)) {
+            return $this->orderNotFound();
+        }
+        $order_prescriptions = Prescription::where('order_id', $order->id)->get()->map(function (Prescription $prescription) use ($order) {
+            return [
+                'id' => $prescription->id,
+                'url' => route('api.orders.prescriptions.show', ['order' => $order->id, 'prescription' => $prescription->id]),
+            ];
+        });
         return response()->json([
             'message' => 'Order details',
             'data' => new OrderResource($order),
@@ -83,25 +86,21 @@ class OrderController extends Controller
         ], 200);
     }
 
-    public function update(Request $request, $id)
+    public function update(PrescriptionUploadRequest $request, $id)
     {
-        $order = Order::find($id);
+        $order = $this->findOwnedOrder($id);
+        if (is_null($order)) {
+            return $this->orderNotFound();
+        }
         if ($order->status == "New") { //New Order
             if ($request->hasFile('prescriptions')) {
-                $images = Prescription::where("order_id", $id)->get();
+                $images = Prescription::where("order_id", $order->id)->get();
                 foreach ($images as $image) {
-                    $directory = 'public/images/prescriptions/' . $image->image;
-                    Storage::delete($directory);
+                    $image->deleteFile();
                 }
-                Prescription::where("order_id", $id)->delete();
+                Prescription::where("order_id", $order->id)->delete();
                 foreach ($request->file('prescriptions') as $prescription) {
-                    $prescription_name = 'image-' . $prescription->getClientOriginalName();
-                    $prescription->storeAs('public/images/prescriptions', $prescription_name);
-                    $order_prescription = new Prescription([
-                        'order_id' => $order->id,
-                        'image' => $prescription_name,
-                    ]);
-                    $order_prescription->save();
+                    Prescription::storeFor($order, $prescription);
                 }
             }
 
@@ -112,6 +111,18 @@ class OrderController extends Controller
         ], 200);
 
 
+    }
+
+    private function findOwnedOrder($id)
+    {
+        return Order::where('id', $id)->where('user_id', auth()->id())->first();
+    }
+
+    private function orderNotFound()
+    {
+        return response()->json([
+            'message' => 'Order not found',
+        ], 404);
     }
 
 

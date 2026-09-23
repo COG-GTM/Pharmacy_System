@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PrescriptionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -45,4 +46,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::put('/orders/{id}' , [OrderController::class , 'update']);
+    Route::get('/orders/{order}/prescriptions/{prescription}', [PrescriptionController::class, 'show'])
+        ->name('api.orders.prescriptions.show');
 });

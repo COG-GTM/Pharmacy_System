@@ -165,7 +165,7 @@
                 $('#orderStatus').val(response.order.status);
                 $('#edit_insured').prop('checked', response.order.is_insured == 1);
                 for (let i = 0; i < response.prescriptions.length; i++) {
-                    var imagePath = "{{ asset('storage/images/prescriptions/:image_name') }}".replace(':image_name', response.prescriptions[i].image);
+                    var imagePath = response.prescriptions[i].url;
                     console.log(imagePath);
                     $('#prescription').append(`
                     <div class="carousel-item active">

@@ -28,7 +28,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post('/register', [AuthController::class, 'register'])->name('auth.register');
 Route::post('/login', [AuthController::class, 'getToken'])->name('auth.getToken'); // /sanctum/token
-Route::get('email/resend/{id}', [AuthController::class, 'resend'])->name('verification.resend');
+Route::middleware(['auth:sanctum', 'throttle:6,1'])
+    ->get('email/resend/{id?}', [AuthController::class, 'resend'])
+    ->name('api.verification.resend');
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 

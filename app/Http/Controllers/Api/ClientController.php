@@ -13,17 +13,23 @@ class ClientController extends Controller
 {
     public function index($id)
     {
+        $client = $this->findOwnedClient($id);
+        if (!$client) {
+            return response()->json(["message" => "This client does not belong to the authenticated user"], 403);
+        }
         return response()->json([
-            "data" => new ClientResource(Client::find($id))
+            "data" => new ClientResource($client)
         ]);
     }
     public function update(UpdateClientRequest $request, $national_id)
     {
         if (is_numeric($national_id)) {
+            $client = $this->findOwnedClient($national_id);
+            if (!$client) {
+                return response()->json(["message" => "This client does not belong to the authenticated user"], 403);
+            }
             try {
-                //  find client
-                $client = Client::where('id', '=', $national_id)->first();
-                // find user related to client and update
+                // update the user related to the authenticated client
                 $userData = [];
                 $userData['name'] = $request->name;
                 User::where('id', $client->user_id)->update($userData);
@@ -47,8 +53,17 @@ class ClientController extends Controller
             }
             return response()->json([
                 "message" => "Client updated successfully",
-                "data" => new ClientResource(Client::find($national_id))
+                "data" => new ClientResource($client->fresh())
             ]);
         }
+    }
+
+    private function findOwnedClient($id)
+    {
+        $auth_user = auth()->user();
+        if (!$auth_user) {
+            return null;
+        }
+        return Client::where('user_id', '=', $auth_user->id)->where('id', '=', $id)->first();
     }
 }

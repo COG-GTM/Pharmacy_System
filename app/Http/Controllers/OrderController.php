@@ -43,6 +43,7 @@ class OrderController extends Controller
 
     public function store(StoreOrderRequest $request)
     {
+        $this->authorize('create', new Order(['pharmacy_id' => $request->pharmacy_id]));
         $client = Client::where("user_id", "=", $request->user_id)->first();
         $pharmacy = Pharmacy::find($request->pharmacy_id);
         if ($client->address->find($request->delivering_address_id)) {
@@ -85,7 +86,8 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::with('medicines')->find($id);
+        $order = Order::with('medicines')->findOrFail($id);
+        $this->authorize('view', $order);
         $user = User::find($order->user_id);
         $pharmacy = Pharmacy::find($order->pharmacy_id);
         $doctor = Doctor::find($order->doctor_id);
@@ -112,7 +114,8 @@ class OrderController extends Controller
 
     public function edit($id)
     {
-        $order = Order::with('medicines')->find($id);
+        $order = Order::with('medicines')->findOrFail($id);
+        $this->authorize('update', $order);
         $user = User::find($order->user_id);
         $pharmacy = Pharmacy::find($order->pharmacy_id);
         $doctor = Doctor::find($order->doctor_id);
@@ -122,7 +125,8 @@ class OrderController extends Controller
     public function update(StoreOrderRequest $request, $id)
     {
         if (is_numeric($id)) {
-            $order = Order::find($id);
+            $order = Order::findOrFail($id);
+            $this->authorize('update', $order);
             if (!is_null($request->quantity)) {
                 $editedQuantity = array_map('intval', $request->quantity);
             } else {
@@ -154,7 +158,8 @@ class OrderController extends Controller
 
     public function destroy($id)
     {
-        $order = Order::with('medicines')->find($id);
+        $order = Order::with('medicines')->findOrFail($id);
+        $this->authorize('delete', $order);
         $order->medicines()->detach();
         Prescription::where("order_id", $id)->delete();
         $order->delete();
@@ -165,7 +170,8 @@ class OrderController extends Controller
     {
         if (is_numeric($order_id)) {
 
-            $order = Order::where('id', $order_id)->first();
+            $order = Order::where('id', $order_id)->firstOrFail();
+            $this->authorize('update', $order);
             if ($order->status == "WaitingForUserConfirmation") {
                 $order->update([
                     "status" =>  "Canceled"

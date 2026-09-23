@@ -13,16 +13,22 @@ class ClientController extends Controller
 {
     public function index($id)
     {
+        $client = $this->ownedClient($id);
+        if (!$client)
+            return response()->json(["message" => "This action is unauthorized"], 403);
+
         return response()->json([
-            "data" => new ClientResource(Client::find($id))
+            "data" => new ClientResource($client)
         ]);
     }
     public function update(UpdateClientRequest $request, $national_id)
     {
         if (is_numeric($national_id)) {
+            $client = $this->ownedClient($national_id);
+            if (!$client)
+                return response()->json(["message" => "This action is unauthorized"], 403);
+
             try {
-                //  find client
-                $client = Client::where('id', '=', $national_id)->first();
                 // find user related to client and update
                 $userData = [];
                 $userData['name'] = $request->name;
@@ -47,8 +53,14 @@ class ClientController extends Controller
             }
             return response()->json([
                 "message" => "Client updated successfully",
-                "data" => new ClientResource(Client::find($national_id))
+                "data" => new ClientResource($client->refresh())
             ]);
         }
+    }
+
+    private function ownedClient($national_id)
+    {
+        $auth_user = auth()->user();
+        return Client::where("user_id", '=', $auth_user->id)->find($national_id);
     }
 }

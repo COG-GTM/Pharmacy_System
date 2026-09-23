@@ -74,7 +74,12 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::find($id);
+        $order = $this->ownedOrder($id);
+        if (!$order) {
+            return response()->json([
+                'message' => 'This action is unauthorized',
+            ], 403);
+        }
         $order_prescriptions = Prescription::where('order_id', $id)->get();
         return response()->json([
             'message' => 'Order details',
@@ -85,7 +90,12 @@ class OrderController extends Controller
 
     public function update(Request $request, $id)
     {
-        $order = Order::find($id);
+        $order = $this->ownedOrder($id);
+        if (!$order) {
+            return response()->json([
+                'message' => 'This action is unauthorized',
+            ], 403);
+        }
         if ($order->status == "New") { //New Order
             if ($request->hasFile('prescriptions')) {
                 $images = Prescription::where("order_id", $id)->get();
@@ -112,6 +122,12 @@ class OrderController extends Controller
         ], 200);
 
 
+    }
+
+    private function ownedOrder($id)
+    {
+        $client = auth()->user();
+        return Order::where('user_id', $client->id)->find($id);
     }
 
 

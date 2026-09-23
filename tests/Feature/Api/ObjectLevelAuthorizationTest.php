@@ -7,7 +7,10 @@ use App\Models\Order;
 use App\Models\Prescription;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -17,11 +20,20 @@ class ObjectLevelAuthorizationTest extends TestCase
      * The legacy migrations cannot be replayed on a fresh database (their
      * filenames order child tables before their parents and one foreign key
      * does not match the type of the key it references), so these tests build
-     * the handful of tables the client and order endpoints touch.
+     * the handful of tables the client and order endpoints touch. Because that
+     * is destructive, it only runs against a database whose name marks it as a
+     * test database.
      */
     protected function setUp(): void
     {
         parent::setUp();
+
+        $database = DB::connection()->getDatabaseName();
+        if (!preg_match('/test/i', $database)) {
+            $this->markTestSkipped(
+                'Refusing to rebuild tables in "' . $database . '": point DB_DATABASE at a test database.'
+            );
+        }
 
         Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('prescriptions');
@@ -210,6 +222,29 @@ class ObjectLevelAuthorizationTest extends TestCase
         $this->assertDatabaseHas('prescriptions', [
             'order_id' => $victimOrder->id,
             'image' => 'image-victim-prescription.png',
+        ]);
+    }
+
+    public function test_client_can_replace_prescriptions_on_own_order()
+    {
+        Storage::fake();
+
+        [$user] = $this->createClient(10000000000001, 'Owner');
+        $order = $this->createOrder($user);
+
+        Sanctum::actingAs($user);
+
+        $this->putJson('/api/orders/' . $order->id, [
+            'prescriptions' => [UploadedFile::fake()->image('owner-prescription.png')],
+        ])->assertStatus(200);
+
+        $this->assertDatabaseMissing('prescriptions', [
+            'order_id' => $order->id,
+            'image' => 'image-victim-prescription.png',
+        ]);
+        $this->assertDatabaseHas('prescriptions', [
+            'order_id' => $order->id,
+            'image' => 'image-owner-prescription.png',
         ]);
     }
 

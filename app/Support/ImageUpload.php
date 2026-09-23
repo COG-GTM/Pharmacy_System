@@ -7,6 +7,7 @@ namespace App\Support;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class ImageUpload
 {
@@ -30,7 +31,10 @@ class ImageUpload
         }
 
         $name = Str::uuid()->toString() . '.' . $extension;
-        $file->storeAs($directory, $name);
+
+        if ($file->storeAs($directory, $name) === false) {
+            throw new RuntimeException("Failed to store the uploaded image in {$directory}");
+        }
 
         return $name;
     }

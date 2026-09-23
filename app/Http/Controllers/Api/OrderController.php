@@ -36,6 +36,9 @@ class OrderController extends Controller
         $addresses = Address::where('client_id', $client->Client->id)->get();
         if ($addresses->find($delivering_address_id)) {
             if ($request->hasFile('prescriptions')) {
+                $request->validate([
+                    'prescriptions.*' => ['image', 'mimes:jpeg,png', 'max:4096'],
+                ]);
                 $order = new Order([
                     'delivering_address_id' => $delivering_address_id,
                     'doctor_id' => null,
@@ -88,6 +91,9 @@ class OrderController extends Controller
         $order = Order::find($id);
         if ($order->status == "New") { //New Order
             if ($request->hasFile('prescriptions')) {
+                $request->validate([
+                    'prescriptions.*' => ['image', 'mimes:jpeg,png', 'max:4096'],
+                ]);
                 $images = Prescription::where("order_id", $id)->get();
                 foreach ($images as $image) {
                     $directory = 'public/images/prescriptions/' . $image->image;

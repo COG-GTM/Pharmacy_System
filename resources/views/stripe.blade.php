@@ -37,7 +37,13 @@
                                 <p>{{ Session::get('success') }}</p>
                             </div>
                             @endif
-                            <form role="form" action="{{ route('stripe.post') }}" method="post" class="require-validation" data-cc-on-file="false" data-stripe-publishable-key="{{ env('STRIPE_KEY') }}" id="payment-form">
+                            @if (Session::has('error'))
+                            <div class="alert alert-danger text-center">
+                                <a href="#" class="close" data-dismiss="alert" aria-label="close">×</a>
+                                <p>{{ Session::get('error') }}</p>
+                            </div>
+                            @endif
+                            <form role="form" action="{{ route('stripe.post') }}" method="post" class="require-validation" data-cc-on-file="false" data-stripe-publishable-key="{{ config('services.stripe.key') }}" id="payment-form">
                                 @csrf
 
                                 <div class='form-row row'>
@@ -82,7 +88,7 @@
                                 <input type="text" name="order_id" value="{{$order->id}}" hidden>
                                 <div class="col-12">
                                     <div class="col-12">
-                                        <button type="submit" onclick="clientdeletemodalShow(event)" class="btn btn-primary btn-lg btn-block">Pay Now ${{$order->price}}</button>
+                                        <button type="submit" class="btn btn-primary btn-lg btn-block">Pay Now ${{$order->price}}</button>
                                     </div>
                                 </div>
                             </form>
@@ -97,13 +103,6 @@
     <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
 
     <script type="text/javascript">
-        function clientdeletemodalShow(event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            event.target.closest("form").submit();
-
-        }
         $(function() {
             /*------------------------------------------
             --------------------------------------------

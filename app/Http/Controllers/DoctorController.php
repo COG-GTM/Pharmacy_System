@@ -35,6 +35,7 @@ class DoctorController extends Controller
 
     public function store(StoreDoctorRequest $request)
     {
+        $this->authorize('create', new Doctor(['pharmacy_id' => $request->pharmacy_id]));
         try {
             $user = User::create([
                 'name' => $request->name,

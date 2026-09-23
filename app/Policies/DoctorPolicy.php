@@ -21,6 +21,11 @@ class DoctorPolicy
         return null;
     }
 
+    public function create(User $user, Doctor $doctor)
+    {
+        return $this->ownsDoctor($user, $doctor);
+    }
+
     public function view(User $user, Doctor $doctor)
     {
         return $this->ownsDoctor($user, $doctor) || $this->isDoctor($user, $doctor);

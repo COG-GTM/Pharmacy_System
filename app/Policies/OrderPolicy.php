@@ -21,6 +21,11 @@ class OrderPolicy
         return null;
     }
 
+    public function create(User $user, Order $order)
+    {
+        return $this->belongsToActingPharmacy($user, $order);
+    }
+
     public function view(User $user, Order $order)
     {
         return $this->belongsToActingPharmacy($user, $order);

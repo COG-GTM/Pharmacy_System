@@ -106,6 +106,39 @@ class TenantAuthorizationTest extends TestCase
             ->assertRedirect(route('orders.index'));
     }
 
+    public function test_pharmacy_user_cannot_create_an_order_for_another_pharmacy(): void
+    {
+        $this->actingAs($this->pharmacyAUser)
+            ->post(route('orders.store'), [
+                'user_id' => $this->createUser('client')->id,
+                'pharmacy_id' => self::PHARMACY_B_ID,
+                'status' => 'New',
+                'creator_type' => 'pharmacy',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('orders', [
+            'pharmacy_id' => self::PHARMACY_B_ID,
+            'status' => 'New',
+        ]);
+    }
+
+    public function test_pharmacy_user_cannot_create_a_doctor_for_another_pharmacy(): void
+    {
+        $this->actingAs($this->pharmacyAUser)
+            ->post(route('doctors.store'), [
+                'id' => '20000000000003',
+                'pharmacy_id' => self::PHARMACY_B_ID,
+                'name' => 'Injected Doctor',
+                'email' => 'injected-doctor@example.com',
+                'password' => 'password123',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('doctors', ['id' => '20000000000003']);
+        $this->assertDatabaseMissing('users', ['email' => 'injected-doctor@example.com']);
+    }
+
     public function test_pharmacy_user_cannot_read_another_pharmacys_doctor(): void
     {
         $this->actingAs($this->pharmacyAUser)

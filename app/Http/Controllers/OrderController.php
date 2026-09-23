@@ -43,6 +43,7 @@ class OrderController extends Controller
 
     public function store(StoreOrderRequest $request)
     {
+        $this->authorize('create', new Order(['pharmacy_id' => $request->pharmacy_id]));
         $client = Client::where("user_id", "=", $request->user_id)->first();
         $pharmacy = Pharmacy::find($request->pharmacy_id);
         if ($client->address->find($request->delivering_address_id)) {

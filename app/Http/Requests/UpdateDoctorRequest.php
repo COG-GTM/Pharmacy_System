@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Doctor;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +15,13 @@ class UpdateDoctorRequest extends FormRequest
      */
     public function authorize()
     {
-        return true;
+        $doctor = Doctor::find($this->route('id'));
+
+        if ($doctor === null) {
+            return true;
+        }
+
+        return $this->user() !== null && $this->user()->can('update', $doctor);
     }
 
     /**

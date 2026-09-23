@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Order;
 use App\Models\Doctor;
 use App\Models\OrderMedicine;
+use App\Support\UploadedImageStorage;
 use Illuminate\Foundation\Auth\User as AuthUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -30,9 +31,7 @@ class PharmacyController extends Controller
     public function store(StorePharmacyRequest $request)
     {
         if ($request->hasFile('avatar_image')) {
-            $avatar = $request->file('avatar_image');
-            $avatar_name = $avatar->getClientOriginalName();
-            $avatar->storeAs('public/pharmacies_Images', $avatar_name);
+            $avatar_name = UploadedImageStorage::store($request->file('avatar_image'), 'pharmacies_Images');
         } else {
             $avatar_name = 'default-avatar.jpg';
         }
@@ -132,9 +131,7 @@ class PharmacyController extends Controller
                     if ($selectedPharmacy->avatar_image && $selectedPharmacy->avatar_image != 'default-avatar.jpg') {
                         Storage::delete('public/pharmacies_Images/'.$selectedPharmacy->avatar_image);
                     }
-                    $avatar = $request->file('avatar_image');
-                    $avatar_name = $avatar->getClientOriginalName();
-                    $avatar->storeAs('public/pharmacies_Images', $avatar_name);
+                    $avatar_name = UploadedImageStorage::store($request->file('avatar_image'), 'pharmacies_Images');
                 } else {
                     $avatar_name = $selectedPharmacy->avatar_image;
                 }

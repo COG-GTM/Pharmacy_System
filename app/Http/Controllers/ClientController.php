@@ -9,6 +9,7 @@ use App\Models\Address;
 use App\Models\Area;
 use App\Models\Client;
 use App\Models\User;
+use App\Support\UploadedImageStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -45,9 +46,7 @@ class ClientController extends Controller
                 $clientData = [];
                 //  handle image
                 if ($request->hasFile('avatar_image')) {
-                    $avatar = $request->file('avatar_image');
-                    $clientData['avatar_image'] = $avatar->getClientOriginalName();
-                    $avatar->storeAs('public/clients_Images', $clientData['avatar_image']);
+                    $clientData['avatar_image'] = UploadedImageStorage::store($request->file('avatar_image'), 'clients_Images');
                 } else {
                     $clientData['avatar_image'] = 'default-avatar.jpg';
                 }
@@ -74,9 +73,7 @@ class ClientController extends Controller
             ]);
 
             if ($request->hasFile('avatar_image')) {
-                $avatar = $request->file('avatar_image');
-                $avatar_name = $avatar->getClientOriginalName();
-                $avatar->storeAs('public/clients_Images', $avatar_name);
+                $avatar_name = UploadedImageStorage::store($request->file('avatar_image'), 'clients_Images');
             } else {
                 $avatar_name = 'default-avatar.jpg';
             }

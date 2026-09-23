@@ -9,6 +9,7 @@ use App\Models\Prescription;
 use App\Models\Order;
 use App\Models\OrderMedicine;
 use App\Models\Pharmacy;
+use App\Support\ImageUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Address;
@@ -47,8 +48,7 @@ class OrderController extends Controller
                 ]);
                 $order->save();
                 foreach ($request->file('prescriptions') as $prescription) {
-                    $prescription_name = 'image-' . $prescription->getClientOriginalName();
-                    $prescription->storeAs('public/images/prescriptions', $prescription_name);
+                    $prescription_name = ImageUpload::store($prescription, 'public/images/prescriptions', 'prescriptions');
                     $order_prescription = new Prescription([
                         'order_id' => $order->id,
                         'image' => $prescription_name,
@@ -95,8 +95,7 @@ class OrderController extends Controller
                 }
                 Prescription::where("order_id", $id)->delete();
                 foreach ($request->file('prescriptions') as $prescription) {
-                    $prescription_name = 'image-' . $prescription->getClientOriginalName();
-                    $prescription->storeAs('public/images/prescriptions', $prescription_name);
+                    $prescription_name = ImageUpload::store($prescription, 'public/images/prescriptions', 'prescriptions');
                     $order_prescription = new Prescription([
                         'order_id' => $order->id,
                         'image' => $prescription_name,

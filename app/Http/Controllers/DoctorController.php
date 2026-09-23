@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateDoctorRequest;
 use App\Models\Doctor;
 use App\Models\Pharmacy;
 use App\Models\User;
+use App\Support\ImageUpload;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\DataTables;
@@ -43,9 +44,7 @@ class DoctorController extends Controller
             ]);
 
             if ($request->hasFile('avatar_image')) {
-                $avatar = $request->file('avatar_image');
-                $avatar_name = $avatar->getClientOriginalName();
-                $avatar->storeAs('public/doctors_Images', $avatar_name);
+                $avatar_name = ImageUpload::store($request->file('avatar_image'), 'public/doctors_Images');
             } else {
                 $avatar_name = 'default-avatar.jpg';
             }
@@ -120,9 +119,7 @@ class DoctorController extends Controller
                     if ($selectedDoctor->avatar_image && $selectedDoctor->avatar_image != 'default-avatar.jpg') {
                         Storage::delete('public/doctors_Images/' . $selectedDoctor->avatar_image);
                     }
-                    $avatar = $request->file('avatar_image');
-                    $avatar_name = $avatar->getClientOriginalName();
-                    $avatar->storeAs('public/doctors_Images', $avatar_name);
+                    $avatar_name = ImageUpload::store($request->file('avatar_image'), 'public/doctors_Images');
                 } else {
                     $avatar_name = $selectedDoctor->avatar_image;
                 }

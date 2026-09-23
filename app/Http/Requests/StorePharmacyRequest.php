@@ -30,7 +30,7 @@ class StorePharmacyRequest extends FormRequest
             'name' => ['required', 'min:3'],
             'email' => [Rule::unique('users', 'email')->ignore($this->user_id),'required'],
             'password' => ['required', 'min:6'],
-            'avatar_image' => ['mimes:jpg,jpeg'],
+            'avatar_image' => ['image', 'mimes:jpg,jpeg', 'max:2048'],
             'area_id' => ['required','exists:areas,id'],
             'priority' => ['required','integer']
         ];

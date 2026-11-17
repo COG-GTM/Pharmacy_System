@@ -39,7 +39,7 @@ $(document).ready(function () {
             quantities[$(this).attr('data-medicine-id')] = $(this).val();
         });
         edit.empty();
-        $(this).find('option:selected').each(function () {
+        $(this).find('option:selected').filter(function () { return this.value !== ''; }).each(function () {
             edit.append($('<input type="text" name="quantity[]" class="form-control" placeholder="Quantity">')
                 .attr('data-medicine-id', this.value)
                 .val(quantities[this.value] ?? ''));

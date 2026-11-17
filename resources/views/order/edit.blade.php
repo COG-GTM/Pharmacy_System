@@ -165,7 +165,7 @@
                 $('#edit_insured').prop('checked', response.order.is_insured == 1);
                 const medicines = $('#edit_medicine');
                 const quantities = $('#editQuantity').empty();
-                medicines.val(null);
+                medicines.find('option').prop('selected', false);
                 response.order.medicines.forEach(function(medicine) {
                     medicines.find(`option[value="${medicine.id}"]`).detach().appendTo(medicines).prop('selected', true);
                     quantities.append($('<input type="text" name="quantity[]" class="form-control" placeholder="Quantity">')

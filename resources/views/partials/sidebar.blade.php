@@ -178,6 +178,23 @@
         </nav>
     </div>
     @endrole
+    @role('client')
+    <!-- Sidebar -->
+    <div class="sidebar" style="height: 84vh;border-bottom:solid thin rgb(96, 96, 96);">
+        <nav class="mt-5">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <li class="nav-item sidebar-list">
+                    <a href="{{ route('home') }}" class="nav-link">
+                        <i class="nav-icon fas fa-home"></i>
+                        <p>
+                            Home
+                        </p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    @endrole
 
     <!--Logout-->
     <a class="nav-link mt-2" href="{{ route('logout') }}" onclick="event.preventDefault();

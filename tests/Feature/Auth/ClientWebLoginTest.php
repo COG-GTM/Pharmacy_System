@@ -85,7 +85,8 @@ class ClientWebLoginTest extends TestCase
         $this->get('/home')
             ->assertOk()
             ->assertSee(route('logout'), false)
-            ->assertSee('mobile app');
+            ->assertSee('mobile app')
+            ->assertSee('<div class="sidebar"', false);
     }
 
     public function test_forbidden_page_offers_logout_to_a_signed_in_user()

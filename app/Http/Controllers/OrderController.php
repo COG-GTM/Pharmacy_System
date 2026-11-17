@@ -13,6 +13,7 @@ use App\Models\Pharmacy;
 use App\Models\Prescription;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\DataTables\OrdersDataTable;
 use App\Http\Requests\StoreOrderRequest;
 use App\Jobs\OrderConfirmationJob;
@@ -130,24 +131,21 @@ class OrderController extends Controller
             }
             $editedOrderMedicine = $request->medicine_id;
             try {
-                $order->update([
-                    'doctor_id' => $request->doctor_id,
-                    'status' => 'WaitingForUserConfirmation',
-                ]);
-                try {
+                DB::transaction(function () use ($order, $request, $editedQuantity, $editedOrderMedicine) {
+                    $order->update([
+                        'doctor_id' => $request->doctor_id,
+                        'status' => 'WaitingForUserConfirmation',
+                    ]);
                     Order::updateOrderMedicine($order, $editedQuantity, $editedOrderMedicine);
-                    $order->price = Order::totalPrice($editedQuantity, $editedOrderMedicine);
                     $order->save();
-                    if ($order->status == "WaitingForUserConfirmation") {
-                        $user = User::where('id', '=', $order->user_id)->first();
-                        dispatch(new OrderConfirmationJob($user, $order));
-                    }
-                } catch (\ErrorException $e) {
-                    return redirect()->route('orders.index')->with('error', 'Error there is no medicine with this name !')->with('timeout', 5000);
-                }
+                });
+            } catch (\ErrorException $e) {
+                return redirect()->route('orders.index')->with('error', 'Error there is no medicine with this name !')->with('timeout', 5000);
             } catch (\Illuminate\Database\QueryException $exception) {
                 return redirect()->route('orders.index')->with('error', 'Error in Updating Order!')->with('timeout', 5000);
             }
+            $user = User::where('id', '=', $order->user_id)->first();
+            dispatch(new OrderConfirmationJob($user, $order));
             return redirect()->route('orders.index')->with('success', 'Orders has been updated successfully!')->with('timeout', 5000);
         }
     }

@@ -12,7 +12,6 @@ $(document).ready(function () {
     $(".select2").on("select2:select", function (evt) {
         var element = evt.params.data.element;
         const inputContainer = $('#input-container');
-        const edit = $('#editQuantity')
         var $element = $(element);
         $element.detach();
         $(this).append($element);
@@ -31,18 +30,20 @@ $(document).ready(function () {
         inputContainer.append(input);
     }
 
-    edit.empty();
+    });
 
-        // edit
-    const editSelected = $(this).find('option:selected').length;
-    const editInputs = 0;
-    if (editInputs > editSelected) {
-        inputContainer.find('input:gt(' + (editSelected - 1) + ')').remove();
-    }
-    for (let i = editInputs + 1; i <= editSelected; i++) {
-        const input = $('<input id="quantityedit" type="text" name="quantity[]" class="form-control" placeholder="Multiple Input in Input Group">');
-        edit.append(input);
-    }
+    $("#edit_medicine").on("select2:select select2:unselect", function () {
+        const edit = $('#editQuantity');
+        const quantities = {};
+        edit.find('input').each(function () {
+            quantities[$(this).attr('data-medicine-id')] = $(this).val();
+        });
+        edit.empty();
+        $(this).find('option:selected').filter(function () { return this.value !== ''; }).each(function () {
+            edit.append($('<input type="text" name="quantity[]" class="form-control" placeholder="Quantity">')
+                .attr('data-medicine-id', this.value)
+                .val(quantities[this.value] ?? ''));
+        });
     });
 });
 

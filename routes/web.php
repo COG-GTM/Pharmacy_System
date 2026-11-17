@@ -50,8 +50,6 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/status/statusbarchart', 'App\Http\Controllers\ChartController@statusData')->name('statusbarchart.data');
         Route::get('/status/statuspiechart', 'App\Http\Controllers\ChartController@statusData')->name('statuspiechart.data');
 
-        Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
         //Medicine Routes
         Route::get('/medicines', [MedicineController::class, 'index'])->name('medicines.index');
         Route::get('/medicines/{id}', [MedicineController::class, 'show'])->name('medicines.show');

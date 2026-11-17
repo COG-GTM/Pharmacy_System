@@ -2,6 +2,10 @@
 
 namespace Tests\Unit\Models;
 
+use App\Http\Controllers\OrderController;
+use App\Http\Requests\StoreOrderRequest;
+use App\Jobs\OrderConfirmationJob;
+use Illuminate\Support\Facades\Bus;
 use App\Models\Medicine;
 use App\Models\Order;
 use Illuminate\Database\Schema\Blueprint;
@@ -105,5 +109,32 @@ class OrderMedicinesUpdateTest extends TestCase
 
         $this->assertSame([$paracetamol->id => 2], $this->lineItems($order));
         $this->assertEquals(5, $order->price);
+    }
+
+    public function test_failed_order_edit_leaves_status_line_items_and_total_untouched(): void
+    {
+        Bus::fake();
+        $paracetamol = Medicine::create([
+            'name' => 'Paracetamol',
+            'type' => 'Tablet',
+            'quantity' => 100,
+            'price' => 250,
+        ]);
+        $order = $this->orderWith([$paracetamol->id => 2]);
+
+        $request = StoreOrderRequest::create("/orders/{$order->id}", 'PUT', [
+            'status' => 'Processing',
+            'creator_type' => 'pharmacy',
+            'medicine_id' => [$paracetamol->id, 999],
+            'quantity' => [5, 1],
+        ]);
+        $response = $this->app->make(OrderController::class)->update($request, $order->id);
+
+        $this->assertSame('Error there is no medicine with this name !', $response->getSession()->get('error'));
+        $order->refresh();
+        $this->assertSame('Processing', $order->status);
+        $this->assertEquals(5, $order->price);
+        $this->assertSame([$paracetamol->id => 2], $this->lineItems($order));
+        Bus::assertNotDispatched(OrderConfirmationJob::class);
     }
 }

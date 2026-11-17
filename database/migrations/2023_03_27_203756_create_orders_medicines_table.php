@@ -17,7 +17,6 @@ return new class extends Migration
 
             $table->unsignedBigInteger('order_id');
             $table->unsignedBigInteger('medicine_id');
-            $table->foreign('order_id')->references('id')->on('orders');
             $table->foreign('medicine_id')->references('id')->on('medicines');
             $table->integer('quantity');
             $table->primary(['order_id', 'medicine_id']);

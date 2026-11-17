@@ -67,7 +67,7 @@
                             </div><!-- /.col -->
                             <div class="col-sm-6">
                                 <ol class="breadcrumb float-sm-right">
-                                    <li class="breadcrumb-item"><a href="{{route('index')}}">Home</a></li>
+                                    <li class="breadcrumb-item"><a href="{{route(auth()->user()?->hasRole('client') ? 'home' : 'index')}}">Home</a></li>
                                     <li class="breadcrumb-item active">Pharmacy System</li>
                                 </ol>
                             </div><!-- /.col -->

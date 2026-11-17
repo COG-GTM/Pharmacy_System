@@ -1,6 +1,6 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
-    <a href="{{ route('index') }}" class="brand-link my-1">
+    <a href="{{ route(auth()->user()?->hasRole('client') ? 'home' : 'index') }}" class="brand-link my-1">
       <img src="dist/img/PharmacyLogo.gif" alt="Pharmacy Logo" class="brand-image img-circle elevation-3" style="opacity: 0.9;">
       <span class="brand-text font-weight-light align-middle">Pharmacy System</span>
     </a>

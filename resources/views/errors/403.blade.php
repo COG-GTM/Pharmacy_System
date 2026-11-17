@@ -11,7 +11,6 @@
     <h1 class="display-4">403</h1>
     <p class="fs-5">{{ __('You do not have access to this page.') }}</p>
     @auth
-        <p class="text-secondary">{{ __('Signed in as :email', ['email' => auth()->user()->email]) }}</p>
         <div class="d-flex gap-2">
             <a href="{{ route('home') }}" class="btn btn-outline-light">{{ __('Go to home') }}</a>
             <form action="{{ route('logout') }}" method="POST">

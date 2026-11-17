@@ -86,7 +86,9 @@ class ClientWebLoginTest extends TestCase
             ->assertOk()
             ->assertSee(route('logout'), false)
             ->assertSee('mobile app')
-            ->assertSee('<div class="sidebar"', false);
+            ->assertSee('<div class="sidebar"', false)
+            ->assertSee('href="' . route('home') . '"', false)
+            ->assertDontSee('href="' . route('index') . '"', false);
     }
 
     public function test_forbidden_page_offers_logout_to_a_signed_in_user()
@@ -96,7 +98,8 @@ class ClientWebLoginTest extends TestCase
         $this->actingAs($client)->get('/')
             ->assertForbidden()
             ->assertSee('action="' . route('logout') . '"', false)
-            ->assertSee('client@example.com');
+            ->assertSee('href="' . route('home') . '"', false)
+            ->assertDontSee('client@example.com');
 
         $this->actingAs($client)->post('/logout')->assertRedirect('/login');
         $this->assertGuest();

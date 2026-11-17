@@ -5,7 +5,7 @@
             <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
         </li>
         <li class="nav-item d-none d-sm-inline-block">
-            <a href="{{ route('index') }}" class="nav-link">Home</a>
+            <a href="{{ route(auth()->user()?->hasRole('client') ? 'home' : 'index') }}" class="nav-link">Home</a>
         </li>
     </ul>
 
@@ -52,7 +52,7 @@
             @endif
         @else
             <li class="nav-item">
-                <a id="navbarDropdown" class="nav-link" href="{{ route('index') }}" role="button"
+                <a id="navbarDropdown" class="nav-link" href="{{ route(auth()->user()?->hasRole('client') ? 'home' : 'index') }}" role="button"
                     data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                     @role('pharmacy')
                     <img src="{{ asset('storage/pharmacies_Images/' . (Auth::user()->pharmacy->avatar_image))}}" class="img-circle elevation-2 me-1" alt="User Image"

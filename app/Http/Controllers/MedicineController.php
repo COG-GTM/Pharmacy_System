@@ -41,7 +41,7 @@ class MedicineController extends Controller
     public function store(StoreMedicineRequest $request)
     {
         Medicine::create($request->validated());
-        return to_route('medicines.index')->with('success', 'Area added successfully!')->with('timeout', 5000);
+        return to_route('medicines.index')->with('success', 'Medicine added successfully!')->with('timeout', 5000);
     }
 
     /**
@@ -81,7 +81,7 @@ class MedicineController extends Controller
     {
 if (is_numeric($id)) {
     Medicine::where('id', $id)->update($request->validated());
-    return to_route('medicines.index')->with('success', 'Area updated successfully!')->with('timeout', 5000);
+    return to_route('medicines.index')->with('success', 'Medicine updated successfully!')->with('timeout', 5000);
 }
     }
 

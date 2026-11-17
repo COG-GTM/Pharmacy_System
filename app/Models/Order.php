@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\DB;
 use PhpParser\Node\Attribute;
 
 class Order extends Model
@@ -83,5 +84,28 @@ class Order extends Model
             $id = Medicine::where('id', $editedOrderMedicine[$i])->first()->id;
             $order->medicines($id)->attach($editedOrderMedicine[$i], ['quantity' => $editedQuantity[$i]]);
         }
+    }
+
+    public function confirm(): bool
+    {
+        return DB::transaction(function () {
+            $order = self::lockForUpdate()->find($this->id);
+            if ($order->status != "WaitingForUserConfirmation") {
+                return false;
+            }
+            $lines = $order->medicines()->get();
+            $stock = Medicine::whereIn('id', $lines->pluck('id'))->lockForUpdate()->get()->keyBy('id');
+            foreach ($lines as $line) {
+                if ($line->pivot->quantity > $stock[$line->id]->quantity) {
+                    return false;
+                }
+            }
+            foreach ($lines as $line) {
+                $stock[$line->id]->decrement('quantity', $line->pivot->quantity);
+            }
+            $order->update(['status' => 'Confirmed']);
+            $this->setRawAttributes($order->getAttributes(), true);
+            return true;
+        });
     }
 }

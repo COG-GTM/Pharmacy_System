@@ -22,6 +22,9 @@
         @elseif ($state == 'Confirmednow')
             <p><Strong>Your order is now Confirmed.</Strong></p>
             <p class="mt-5">Thank You for using our website..</p>
+        @elseif ($state == 'OutOfStock')
+            <p><Strong>We can't confirm your order. Some of its medicines are no longer in stock.</Strong></p>
+            <p class="mt-5">Thank You for using our website..</p>
         @elseif ($state == 'Delivered')
             <p><Strong>Your order is already Delivered.</Strong></p>
             <p class="mt-5">Thank You for using our website..</p>

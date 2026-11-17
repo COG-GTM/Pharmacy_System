@@ -69,9 +69,9 @@ class StripePaymentController extends Controller
 
             $order = Order::where('id', $order_id)->first();
             if ($order->status == "WaitingForUserConfirmation") {
-                $order->update([
-                    "status" =>  "Confirmed"
-                ]);
+                if (!$order->confirm()) {
+                    return view('actions.confirm', ['order' => $order, 'state' => "OutOfStock"]);
+                }
                 return view('actions.confirm', ['order' => $order, 'state' => "Confirmednow"]);
             } elseif ($order->status == "Canceled") {
                 return view('actions.confirm', ['order' => $order, 'state' => "Canceled"]);

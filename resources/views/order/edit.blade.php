@@ -149,7 +149,6 @@
     function editmodalShow(event) {
         event.preventDefault();
         event.stopPropagation();
-        $('editQuantity').text(" ");
         $('#prescription').text(" ");
         var itemId = event.target.id;
         $.ajax({
@@ -164,6 +163,16 @@
                 $('#editOrderCreator').val(response.order.creator_type);
                 $('#orderStatus').val(response.order.status);
                 $('#edit_insured').prop('checked', response.order.is_insured == 1);
+                const medicines = $('#edit_medicine');
+                const quantities = $('#editQuantity').empty();
+                medicines.val(null);
+                response.order.medicines.forEach(function(medicine) {
+                    medicines.find(`option[value="${medicine.id}"]`).detach().appendTo(medicines).prop('selected', true);
+                    quantities.append($('<input type="text" name="quantity[]" class="form-control" placeholder="Quantity">')
+                        .attr('data-medicine-id', medicine.id)
+                        .val(medicine.pivot.quantity));
+                });
+                medicines.trigger('change');
                 for (let i = 0; i < response.prescriptions.length; i++) {
                     var imagePath = "{{ asset('storage/images/prescriptions/:image_name') }}".replace(':image_name', response.prescriptions[i].image);
                     console.log(imagePath);

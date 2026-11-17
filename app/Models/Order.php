@@ -79,16 +79,16 @@ class Order extends Model
 
     public static function updateOrderMedicine($order, $editedQuantity, $editedOrderMedicine)
     {
-        if (empty($editedOrderMedicine)) {
-            return;
+        if (!empty($editedOrderMedicine)) {
+            $quantities = array_values((array) $editedQuantity);
+            $medicines = [];
+            foreach (array_values($editedOrderMedicine) as $i => $medicineId) {
+                $id = Medicine::where('id', $medicineId)->first()->id;
+                $medicines[$id] = ['quantity' => ($medicines[$id]['quantity'] ?? 0) + (int) ($quantities[$i] ?? 0)];
+            }
+            $order->medicines()->sync($medicines);
         }
-        $quantities = array_values((array) $editedQuantity);
-        $medicines = [];
-        foreach (array_values($editedOrderMedicine) as $i => $medicineId) {
-            $id = Medicine::where('id', $medicineId)->first()->id;
-            $medicines[$id] = ['quantity' => ($medicines[$id]['quantity'] ?? 0) + (int) ($quantities[$i] ?? 0)];
-        }
-        $order->medicines()->sync($medicines);
+        $order->price = self::orderTotalPrice($order);
     }
 
     public static function orderTotalPrice($order)

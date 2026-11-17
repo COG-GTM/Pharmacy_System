@@ -81,7 +81,7 @@ class OrderMedicinesUpdateTest extends TestCase
         Order::updateOrderMedicine($order, [1], [$ibuprofen->id]);
 
         $this->assertSame([$ibuprofen->id => 1], $this->lineItems($order));
-        $this->assertEquals(4, Order::orderTotalPrice($order));
+        $this->assertEquals(4, $order->price);
     }
 
     public function test_editing_order_can_change_quantity_of_a_medicine_already_on_it(): void
@@ -92,17 +92,18 @@ class OrderMedicinesUpdateTest extends TestCase
         Order::updateOrderMedicine($order, [5], [$paracetamol->id]);
 
         $this->assertSame([$paracetamol->id => 5], $this->lineItems($order));
-        $this->assertEquals(12.5, Order::orderTotalPrice($order));
+        $this->assertEquals(12.5, $order->price);
     }
 
     public function test_editing_order_without_medicines_keeps_line_items_and_total(): void
     {
         $paracetamol = Medicine::create(['name' => 'Paracetamol', 'type' => 'Tablet', 'quantity' => 100, 'price' => 250]);
         $order = $this->orderWith([$paracetamol->id => 2]);
+        $order->price = 0;
 
         Order::updateOrderMedicine($order, 0, null);
 
         $this->assertSame([$paracetamol->id => 2], $this->lineItems($order));
-        $this->assertEquals(5, Order::orderTotalPrice($order));
+        $this->assertEquals(5, $order->price);
     }
 }

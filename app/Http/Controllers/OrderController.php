@@ -136,7 +136,7 @@ class OrderController extends Controller
                 ]);
                 try {
                     Order::updateOrderMedicine($order, $editedQuantity, $editedOrderMedicine);
-                    $order->price = Order::totalPrice($editedQuantity, $editedOrderMedicine);
+                    $order->price = Order::orderTotalPrice($order);
                     $order->save();
                     if ($order->status == "WaitingForUserConfirmation") {
                         $user = User::where('id', '=', $order->user_id)->first();

@@ -79,9 +79,21 @@ class Order extends Model
 
     public static function updateOrderMedicine($order, $editedQuantity, $editedOrderMedicine)
     {
-        for ($i = 0; $i < count($editedOrderMedicine ?? []); $i++) {
-            $id = Medicine::where('id', $editedOrderMedicine[$i])->first()->id;
-            $order->medicines($id)->attach($editedOrderMedicine[$i], ['quantity' => $editedQuantity[$i]]);
+        if (empty($editedOrderMedicine)) {
+            return;
         }
+        $quantities = array_values((array) $editedQuantity);
+        $medicines = [];
+        foreach (array_values($editedOrderMedicine) as $i => $medicineId) {
+            $id = Medicine::where('id', $medicineId)->first()->id;
+            $medicines[$id] = ['quantity' => ($medicines[$id]['quantity'] ?? 0) + (int) ($quantities[$i] ?? 0)];
+        }
+        $order->medicines()->sync($medicines);
+    }
+
+    public static function orderTotalPrice($order)
+    {
+        $total = $order->medicines()->get()->sum(fn ($medicine) => $medicine->price * $medicine->pivot->quantity);
+        return $total / 100; //convert from cent to dollars
     }
 }

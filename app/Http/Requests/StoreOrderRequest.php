@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Medicine;
+use App\Models\Order;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +25,9 @@ class StoreOrderRequest extends FormRequest
             'user_id' => ['exists:users,id'],
             'delivering_address_id' => ['exists:addresses,id'],
             'pharmacy_id' => ['exists:pharmacies,id'],
-            'status' => ['required', Rule::in(['New', 'Processing', 'WaitingForUserConfirmation', 'Canceled', 'Confirmed', 'Delivered'])],
+            'status' => ['required', Rule::in($this->isMethod('post')
+                ? ['New', 'Processing', 'WaitingForUserConfirmation', 'Canceled']
+                : ['New', 'Processing', 'WaitingForUserConfirmation', 'Canceled', 'Confirmed', 'Delivered'])],
             'creator_type' => ['required', Rule::in(['client', 'doctor', 'pharmacy'])],
         ];
 
@@ -44,6 +47,12 @@ class StoreOrderRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            $orderId = $this->route('orders');
+            $order = is_numeric($orderId) ? Order::find($orderId) : null;
+            if ($order && in_array($order->status, ['Confirmed', 'Delivered'])) {
+                $validator->errors()->add('status', "{$order->status} orders can't be edited.");
+            }
+
             $quantities = array_values((array) $this->input('quantity', []));
             $requested = [];
             foreach (array_values((array) $this->input('medicine_id', [])) as $i => $medicineId) {

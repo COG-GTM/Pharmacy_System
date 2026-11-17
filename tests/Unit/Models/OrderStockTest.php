@@ -2,10 +2,12 @@
 
 namespace Tests\Unit\Models;
 
+use App\Http\Controllers\OrderController;
 use App\Http\Requests\StoreOrderRequest;
 use App\Models\Medicine;
 use App\Models\Order;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
@@ -47,26 +49,35 @@ class OrderStockTest extends TestCase
             $table->primary(['order_id', 'medicine_id']);
             $table->timestamps();
         });
+        Schema::create('prescriptions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('order_id');
+            $table->string('image')->nullable();
+            $table->timestamps();
+        });
     }
 
-    private function validateOrder(array $medicineIds, array $quantities): void
+    private function validateOrder(array $medicineIds, array $quantities, string $status = 'Processing', ?int $editing = null): void
     {
-        $request = StoreOrderRequest::create('/orders', 'POST', [
-            'status' => 'Processing',
+        $request = StoreOrderRequest::create($editing ? "/orders/$editing" : '/orders', $editing ? 'PUT' : 'POST', [
+            'status' => $status,
             'creator_type' => 'pharmacy',
             'medicine_id' => $medicineIds,
             'quantity' => $quantities,
         ]);
+        if ($editing) {
+            $request->setRouteResolver(fn () => (new Route('PUT', 'orders/{orders}', []))->bind($request));
+        }
         $request->setContainer($this->app)->setRedirector($this->app['redirect']);
         $request->validateResolved();
     }
 
-    private function waitingOrder(array $medicines): Order
+    private function waitingOrder(array $medicines, string $status = 'WaitingForUserConfirmation'): Order
     {
         $order = Order::create([
             'user_id' => 1,
             'pharmacy_id' => 1,
-            'status' => 'WaitingForUserConfirmation',
+            'status' => $status,
             'is_insured' => 0,
             'creator_type' => 'pharmacy',
             'price' => 0,
@@ -123,5 +134,54 @@ class OrderStockTest extends TestCase
 
         $this->assertSame('WaitingForUserConfirmation', $order->fresh()->status);
         $this->assertEquals(10, $insulin->fresh()->quantity);
+    }
+
+    public function test_creating_an_order_as_confirmed_is_rejected(): void
+    {
+        $insulin = Medicine::create(['name' => 'Insulin Pen', 'type' => 'Injection', 'quantity' => 10, 'price' => 2500]);
+
+        foreach (['Confirmed', 'Delivered'] as $status) {
+            try {
+                $this->validateOrder([$insulin->id], [4], $status);
+                $this->fail("Creating an order as $status passed validation.");
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('status', $e->errors());
+            }
+        }
+    }
+
+    public function test_editing_a_confirmed_order_is_rejected(): void
+    {
+        $insulin = Medicine::create(['name' => 'Insulin Pen', 'type' => 'Injection', 'quantity' => 10, 'price' => 2500]);
+        $confirmed = $this->waitingOrder([$insulin->id => 4]);
+        $this->assertTrue($confirmed->confirm());
+        $waiting = $this->waitingOrder([$insulin->id => 2]);
+
+        try {
+            $this->validateOrder([$insulin->id], [2], 'Confirmed', $confirmed->id);
+            $this->fail('Editing a confirmed order passed validation.');
+        } catch (ValidationException $e) {
+            $this->assertSame(["Confirmed orders can't be edited."], $e->errors()['status']);
+        }
+
+        $this->validateOrder([$insulin->id], [3], 'WaitingForUserConfirmation', $waiting->id);
+        $this->assertEquals(6, $insulin->fresh()->quantity);
+    }
+
+    public function test_deleting_a_confirmed_order_returns_its_stock(): void
+    {
+        $insulin = Medicine::create(['name' => 'Insulin Pen', 'type' => 'Injection', 'quantity' => 10, 'price' => 2500]);
+        $confirmed = $this->waitingOrder([$insulin->id => 4]);
+        $this->assertTrue($confirmed->confirm());
+        $waiting = $this->waitingOrder([$insulin->id => 3]);
+        $this->assertEquals(6, $insulin->fresh()->quantity);
+
+        $this->app->make(OrderController::class)->destroy($waiting->id);
+        $this->assertEquals(6, $insulin->fresh()->quantity);
+
+        $this->app->make(OrderController::class)->destroy($confirmed->id);
+        $this->assertEquals(10, $insulin->fresh()->quantity);
+        $this->assertNull(Order::find($confirmed->id));
+        $this->assertSame(0, DB::table('orders_medicines')->where('order_id', $confirmed->id)->count());
     }
 }

@@ -155,6 +155,7 @@ class OrderController extends Controller
     public function destroy($id)
     {
         $order = Order::with('medicines')->find($id);
+        $order->returnStock();
         $order->medicines()->detach();
         Prescription::where("order_id", $id)->delete();
         $order->delete();

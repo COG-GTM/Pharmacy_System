@@ -108,4 +108,16 @@ class Order extends Model
             return true;
         });
     }
+
+    public function returnStock(): void
+    {
+        if ($this->status != "Confirmed") {
+            return;
+        }
+        DB::transaction(function () {
+            foreach ($this->medicines()->get() as $line) {
+                Medicine::whereKey($line->id)->increment('quantity', $line->pivot->quantity);
+            }
+        });
+    }
 }

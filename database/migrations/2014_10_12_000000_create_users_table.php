@@ -21,6 +21,10 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
         });
+
+        Schema::table('clients', function (Blueprint $table) {
+            $table->foreign('user_id')->references('id')->on('users');
+        });
     }
 
     /**
@@ -30,6 +34,9 @@ return new class extends Migration
      */
     public function down()
     {
+        Schema::table('clients', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
+        });
         Schema::dropIfExists('users');
     }
 };

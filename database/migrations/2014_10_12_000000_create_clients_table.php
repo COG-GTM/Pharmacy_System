@@ -20,7 +20,6 @@ return new class extends Migration
             $table->string('avatar_image');
             $table->string('phone');
             $table->unsignedBigInteger('area_id');
-            $table->foreign('area_id')->references('id')->on('areas');
             $table->string('street_name');
             $table->integer('building_no');
             $table->integer('floor_number');
@@ -28,7 +27,6 @@ return new class extends Migration
             $table->boolean('is_main');
             $table->timestamp('email_verified_at')->nullable();
             $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users');
 
         });
     }

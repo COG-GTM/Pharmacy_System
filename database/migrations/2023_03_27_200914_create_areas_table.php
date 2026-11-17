@@ -19,6 +19,12 @@ return new class extends Migration
             $table->string('address');
             $table->timestamps();
         });
+
+        foreach (['clients', 'pharmacies'] as $referencing) {
+            Schema::table($referencing, function (Blueprint $table) {
+                $table->foreign('area_id')->references('id')->on('areas');
+            });
+        }
     }
 
     /**
@@ -28,6 +34,13 @@ return new class extends Migration
      */
     public function down()
     {
+        foreach (['clients', 'pharmacies'] as $referencing) {
+            if (Schema::hasColumn($referencing, 'area_id')) {
+                Schema::table($referencing, function (Blueprint $table) {
+                    $table->dropForeign(['area_id']);
+                });
+            }
+        }
         Schema::dropIfExists('areas');
     }
 };

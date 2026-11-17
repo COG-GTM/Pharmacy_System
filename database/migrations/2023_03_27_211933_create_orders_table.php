@@ -27,6 +27,12 @@ return new class extends Migration
 
             $table->timestamps();
         });
+
+        foreach (['payments', 'orders_medicines'] as $referencing) {
+            Schema::table($referencing, function (Blueprint $table) {
+                $table->foreign('order_id')->references('id')->on('orders');
+            });
+        }
     }
 
     /**
@@ -36,6 +42,11 @@ return new class extends Migration
      */
     public function down()
     {
+        foreach (['payments', 'orders_medicines'] as $referencing) {
+            Schema::table($referencing, function (Blueprint $table) {
+                $table->dropForeign(['order_id']);
+            });
+        }
         Schema::dropIfExists('orders');
     }
 };

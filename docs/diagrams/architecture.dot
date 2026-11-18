@@ -1,0 +1,69 @@
+// Pharmacy_System architecture (main). Render with docs/diagrams/render.sh.
+digraph architecture {
+  rankdir=TB;
+  newrank=true;
+  compound=true;
+  nodesep=0.45;
+  ranksep=0.6;
+  fontname="DejaVu Sans";
+  fontsize=18;
+  labelloc=t;
+  label="Pharmacy_System: one Laravel 9 app (main)";
+  node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=16, fillcolor=white, color="#555555"];
+  edge [fontname="DejaVu Sans", fontsize=13, color="#444444"];
+
+  staff [label="Admin / Pharmacy owner / Doctor\n(browser)", fillcolor="#e3f2fd"];
+  client [label="Client\n(mobile or API consumer)", fillcolor="#e3f2fd"];
+  mailbox [label="Client mailbox\n(confirm / cancel links)", fillcolor="#e3f2fd"];
+
+  subgraph cluster_app {
+    label="Laravel 9 application (php artisan serve)"; style="rounded,filled"; fillcolor="#fafafa"; color="#888888";
+
+    web [label="routes/web.php\nsession auth (laravel/ui) + email verify\nSpatie role middleware\nLogsOutBannedUser", fillcolor="#fff3e0"];
+    api [label="routes/api.php  /api/*\nSanctum tokens, 'verified'\nregister, login, client,\naddress, orders", fillcolor="#fff3e0"];
+
+    ctrls [label="Web controllers\nPharmacy, Doctor (ban/unban), Area,\nClient, Address, Medicine, Order,\nRevenue, Chart, StripePayment", fillcolor="#fffde7"];
+    apictrls [label="Api controllers\nAuth, Client, Address, Order\n(prescription uploads)", fillcolor="#fffde7"];
+
+    views [label="Blade views + AdminLTE plugins\nYajra DataTables (excel/csv/pdf/print)\nChart.js status charts\nVite: resources/sass, resources/js", fillcolor="#f3e5f5"];
+
+    models [label="Eloquent models\nUser (roles, bans, tokens), Client, Doctor,\nPharmacy, Area, Address, Medicine,\nOrder, Prescription, Payment", fillcolor="#e8f5e9"];
+
+    jobs [label="Jobs + notifications\nOrderConfirmationJob -> confirm/cancel email\nWelcomeEmail, InactiveUser notifications\n(QUEUE_CONNECTION=sync)", fillcolor="#e0f7fa"];
+
+    sched [label="Scheduler (php artisan schedule:work)\nevery minute: AssignNewOrder  New -> Processing\nevery minute: ChangeOrderStatusJob  Confirmed -> Delivered\ndaily: RemoveOldBans (> 30 days)\n08:00: send:inactive-users-notification", fillcolor="#e0f7fa"];
+
+    cli [label="Artisan commands\ncreate:admin\nsend:inactive-users-notification", fillcolor="#e0f7fa"];
+  }
+
+  mysql [label="MySQL\npharmacy_system\n(users, roles, bans, orders, ...)", shape=cylinder, fillcolor="#ede7f6"];
+  storage [label="storage/app/public\n(avatars, prescriptions)\nvia php artisan storage:link", shape=folder, fillcolor="#ede7f6"];
+  smtp [label="SMTP\n(Mailtrap / Gmail)", fillcolor="#eceff1"];
+  stripejs [label="Stripe.js v2 (browser)\ncard token only;\nserver-side charge is commented out", fillcolor="#eceff1"];
+
+  staff -> web;
+  client -> api;
+  mailbox -> web [label="stripe/{id}, orders/stauts/{id}"];
+  web -> ctrls;
+  api -> apictrls;
+  ctrls -> views;
+  views -> stripejs [style=dashed];
+  ctrls -> models;
+  apictrls -> models;
+  ctrls -> jobs [label="order -> WaitingForUserConfirmation"];
+  apictrls -> jobs [label="Registered event\n(verify email)"];
+  sched -> models;
+  cli -> models;
+  models -> mysql;
+  ctrls -> storage;
+  apictrls -> storage;
+  jobs -> smtp;
+  smtp -> mailbox [style=dashed];
+
+  {rank=same; web; api;}
+  {rank=same; ctrls; apictrls;}
+  {rank=same; staff; client;}
+  {rank=same; jobs; sched;}
+  {rank=same; models; cli;}
+  {rank=same; mysql; storage; smtp; stripejs; mailbox;}
+}

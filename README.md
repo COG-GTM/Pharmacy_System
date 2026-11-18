@@ -1,4 +1,4 @@
-# PHARMACY MANAGMENT SYSTEM
+# PHARMACY MANAGEMENT SYSTEM
 <p align="center" style="margin-top:6%;margin-bottom:6%;">
   <img style = "width:140px; height:140px;" src="https://user-images.githubusercontent.com/81237428/230607665-ef41d0f9-52e6-4e21-b87d-6322b338e57c.gif" />
 </p>
@@ -13,7 +13,7 @@ The `client` is the end user who can make any Order.</br>
 - Authuntication
 - Email Verification
 - Roles and Perimissions
-- Auto Assign Order to the Closest Pharmacy Area
+- Auto Assign New Orders to the Highest-Priority Pharmacy in the Delivery Area
 - Ban and UnBan Doctor
 - Total Revenue of each Pharmacy 
 - Email Notification
@@ -21,32 +21,42 @@ The `client` is the end user who can make any Order.</br>
 - Stripe Payment
 - Display Orders as Excel Sheet
 
+## ARCHITECTURE
+How the web dashboard, client API, scheduler, jobs and database fit together, with the order lifecycle: [docs/architecture.md](docs/architecture.md).
+
+![Architecture diagram](docs/diagrams/architecture.png)
+
 ## DEMO
 🎬
 We Hope That You are enjoying Watching Our Demo Video 
 [Click Here](https://www.youtube.com/watch?v=6k82NfqhROo) 
 
 ## INSTALLATION
+Requires PHP 8.0-8.2 (the locked dependencies in `composer.lock` do not install on PHP 8.3), Composer, Node.js with npm, and MySQL.
 <pre>
-- git clone 
-- Composer install
+- git clone https://github.com/COG-GTM/Pharmacy_System.git && cd Pharmacy_System
+- composer install
 - npm install
-- cp .env-example .env
+- cp .env.example .env            # then set DB_*, MAIL_* and STRIPE_KEY
+- php artisan key:generate
+- create the MySQL database named in DB_DATABASE (default: pharmacy_system)
 - php artisan migrate
-- php artisan db:seed
+- php artisan db:seed             # roles, countries and a default admin (database/seeders/AdminSeeder.php)
 - php artisan storage:link
-- npm run build
-- npm run dev
+- npm run build                   # or keep `npm run dev` running instead while developing
 - php artisan serve
-- php artisan schedule:work
+- php artisan schedule:work       # in another terminal: assigns new orders, delivers confirmed orders, lifts old bans
 </pre>
- 
+
+> **Known issue:** on `main`, `php artisan migrate` fails on an empty MySQL database. Migrations are ordered so `create_clients_table` (2014) adds foreign keys to `areas` and `users` before those tables exist, and `create_payments_table` references `orders` before it is created.
+
  ## CREATE ADMIN 
 <pre>
 php artisan create:admin --name="admin" --email=admin@admin.com --password=******
 </pre>
 
 ## CLIENT APIs
+`register`, `login` and `email/resend` are public. All other endpoints need the Sanctum token from `login` (`Authorization: Bearer <token>`) and a verified email.
 <div align="center" style="width:100%">
     
 |  METHODS      |         URI              | ACTIONS | 
@@ -61,6 +71,7 @@ php artisan create:admin --name="admin" --email=admin@admin.com --password=*****
 | PUT           | `/api/address/{id}`      | `Update Address` | 
 | DELETE        | `/api/address/{id}`      | `Delete Address` | 
 | POST          | `/api/orders`            | `Create New Order` | 
+| GET           | `/api/orders`            | `Get My Orders` | 
 | GET           | `/api/orders/{id}`       | `Get Order By ID` | 
 | PUT           | `/api/orders/{id}`       | `Update Order` | 
 | GET           | `/api/email/resend/{id}` | `Resend Email Verification` | 
@@ -74,7 +85,7 @@ php artisan create:admin --name="admin" --email=admin@admin.com --password=*****
 - yajra/laravel-datatables                v9.0.0                Laravel DataTables Complete Package
 - spatie/laravel-permission               5.10.0                Permission handling for Laravel 6.0 and up
 - webpatser/laravel-countries             dev-master 9d0cd97    Laravel Countries is a bundle for Laravel, providing Al   
-- egulias/email-validator                 4.0.1                 A library for validating emails against several RFCs
+- egulias/email-validator                 3.2.5                 A library for validating emails against several RFCs
 - cybercog/laravel-ban                    4.8.0                 Laravel Ban simplify blocking and banning Eloquent models  
 - stripe/stripe-php                       v10.12.1              Stripe PHP Library
 </pre>

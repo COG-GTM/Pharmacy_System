@@ -1,42 +1,41 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\Doctor;
 use App\Models\Order;
 use App\Models\Pharmacy;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class ChartController extends Controller
 {
-    public function statusData()
+    public function statusData(): JsonResponse
     {
         $user = Auth::user();
 
         if ($user->hasRole('admin')) {
-            $orders = Order::all()->groupBy('status');
-        }elseif ($user->hasRole('pharmacy')) {
-            $pharmacy = Pharmacy::where('user_id',$user->id)->first()->id;
-            $orders = Order::where('pharmacy_id',$pharmacy)->get()->groupBy('status');
-        }elseif ($user->hasRole('doctor')) {
-            $pharmacy = Doctor::where('user_id',$user->id)->first()->pharmacy_id;
-            $orders = Order::where('pharmacy_id',$pharmacy)->get()->groupBy('status');
+            $orders = Order::query();
+        } elseif ($user->hasRole('pharmacy')) {
+            $pharmacy = Pharmacy::where('user_id', $user->id)->first()->id;
+            $orders = Order::where('pharmacy_id', $pharmacy);
+        } elseif ($user->hasRole('doctor')) {
+            $pharmacy = Doctor::where('user_id', $user->id)->first()->pharmacy_id;
+            $orders = Order::where('pharmacy_id', $pharmacy);
         }
 
-        $data = [];
+        $counts = $orders->toBase()
+            ->selectRaw('status, COUNT(*) AS order_count')
+            ->groupBy('status')
+            ->pluck('order_count', 'status');
+
         $labels = ['New', 'Processing', 'WaitingForUserConfirmation', 'Canceled', 'Delivered'];
-        foreach($labels as $label) {
-            if(array_key_exists($label, $orders->toArray())) {
-                array_push($data, $orders[$label]->count());
-            } else {
-                array_push($data, 0);
-            }
-        }
+
         return response()->json([
             'labels' => $labels,
-            'data' => $data
+            'data' => array_map(static fn (string $label): int => (int) ($counts[$label] ?? 0), $labels),
         ]);
     }
-
 }
